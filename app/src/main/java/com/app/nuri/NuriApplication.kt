@@ -12,6 +12,9 @@ import android.app.Application
 class NuriApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Self-update (brief §10): schedule the nightly background check.
+        // Idempotent — UpdateScheduler keeps the existing job if present.
+        com.app.nuri.update.android.UpdateScheduler.schedule(this)
         // TODO(GATED): initialize shared Scout voice engine (tts/ + speech/).
         // TODO(GATED): start diagnostics collection.
     }
