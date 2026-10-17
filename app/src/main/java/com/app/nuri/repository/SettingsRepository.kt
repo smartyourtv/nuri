@@ -72,6 +72,13 @@ class SettingsRepository(private val context: Context) {
     suspend fun setSlowerSpeech(v: Boolean) { context.dataStore.edit { it[Keys.SLOWER_SPEECH] = v } }
     suspend fun setLongerListenWindow(v: Boolean) { context.dataStore.edit { it[Keys.LONGER_LISTEN] = v } }
     suspend fun setAlwaysListenEnabled(v: Boolean) { context.dataStore.edit { it[Keys.ALWAYS_LISTEN] = v } }
+    /**
+     * Therapist consent (brief SS5, bug-hunt NU-5): whether the plain-language
+     * sharing list was read together and marked seen. The read side is what
+     * the first-install therapist flow and the Settings "What Nuri shares"
+     * card surface; before NU-5 this state was write-only and never shown.
+     */
+    val therapistConsentSeen: Flow<Boolean> = context.dataStore.data.map { it[Keys.THERAPIST_CONSENT_SEEN] ?: false }
     suspend fun setTherapistConsentSeen(v: Boolean) { context.dataStore.edit { it[Keys.THERAPIST_CONSENT_SEEN] = v } }
 
     val btSlots: Flow<BtSlotManager> = context.dataStore.data.map { BtSlotManager.decode(it[Keys.BT_SLOTS] ?: "") }
