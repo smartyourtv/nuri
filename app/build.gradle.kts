@@ -63,8 +63,19 @@ android {
     // only in src/private when implemented. Never add stealth to src/main.
     flavorDimensions += "edition"
     productFlavors {
-        create("public") { dimension = "edition" }
-        create("private") { dimension = "edition" }
+        // UPDATE_FEED_URL (brief §10): each variant checks its OWN update
+        // feed. Blank = not wired yet — the distribution endpoint is an open
+        // decision (brief §6), and the executor honestly reports that it
+        // cannot check rather than pretending. Set per flavor at release
+        // time; never point a flavor at the other flavor's feed.
+        create("public") {
+            dimension = "edition"
+            buildConfigField("String", "UPDATE_FEED_URL", "\"\"")
+        }
+        create("private") {
+            dimension = "edition"
+            buildConfigField("String", "UPDATE_FEED_URL", "\"\"")
+        }
     }
 
     compileOptions {
