@@ -40,7 +40,7 @@ class DiagnosticsViewModel : ViewModel() {
             DiagnosticCheck("Email snapshot backup", "Not connected", GmailSnapshotBackup().statusText()),
             DiagnosticCheck("Google account helpers", "Not connected", GoogleDiagnostics.text()),
             DiagnosticCheck("Bluetooth speakers", "Not built yet", BtDiagnostics.text(BtSlotManager())),
-            DiagnosticCheck("Updates", "Not connected", "Update checking is built, but no update address is set yet, so it honestly reports that it cannot check. Updates never change how Nuri looks or sounds.")
+            DiagnosticCheck("Updates", "Not connected", "The full update machinery is built — nightly check, verified download, careful install, self-check afterwards — but no update address is set in this build yet, so it honestly reports that it cannot check. Updates never change how Nuri looks or sounds.")
         )
     }
     private val _state = MutableStateFlow(DiagnosticsState(checks = buildChecks(runBackupTest = false)))
