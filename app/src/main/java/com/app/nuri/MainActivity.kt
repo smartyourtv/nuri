@@ -33,6 +33,10 @@ import com.app.nuri.ui.theme.NuriTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Self-update (brief §10): if an update was installed since the last
+        // start, resolve it now — self-test, quiet after-note, or caregiver
+        // alert. Runs on a background thread; never blocks the first frame.
+        com.app.nuri.update.android.PostUpdateCheck.runAsync(this)
         setContent {
             NuriTheme {
                 NuriShell()
