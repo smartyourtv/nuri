@@ -1,0 +1,58 @@
+package com.app.nuri.tts
+
+import com.app.nuri.config.NuriSettings
+import com.app.nuri.tier.TierDefaults
+
+/**
+ * TTS pipeline — contract extended in Phase D (engine itself still gated:
+ * the sherpa-onnx / Kokoro wiring lands with on-device voice work; nothing
+ * speaks until then, and no method here pretends otherwise).
+ *
+ * Voice continuity (brief SS3): ONE voice id, from settings, forever.
+ * Emotion-aware requests carry prosody HINTS derived from the emotion level;
+ * Guided requests are clamped to the comforting range before hints are made.
+ * Laughs, when the engine lands, must be rendered BY that one voice (Scout
+ * EmotionEngine lesson), never from a clip in someone else's voice.
+ */
+interface TtsEngine {
+    fun currentVoice(): String?
+}
+
+data class ProsodyHints(val rateMultiplier: Float, val warmth: Float, val expressiveness: Float, val allowSurprise: Boolean, val allowLaughter: Boolean)
+data class SpeakRequest(val text: String, val voiceId: String, val emotionLevel: NuriSettings.EmotionLevel, val prosody: ProsodyHints, val slowerSpeech: Boolean)
+
+object EmotionProsody {
+    fun hintsFor(level: NuriSettings.EmotionLevel, tier: NuriSettings.Tier): ProsodyHints {
+        val effective = if (tier == NuriSettings.Tier.GUIDED) TierDefaults.clampEmotionForGuided(level) else level
+        return when (effective) {
+            NuriSettings.EmotionLevel.CALM -> ProsodyHints(0.95f, 0.1f, 0.1f, allowSurprise = false, allowLaughter = false)
+            NuriSettings.EmotionLevel.GENTLE -> ProsodyHints(0.92f, 0.4f, 0.3f, allowSurprise = false, allowLaughter = false)
+            NuriSettings.EmotionLevel.WARM -> ProsodyHints(0.95f, 0.6f, 0.5f, allowSurprise = true, allowLaughter = true)
+            NuriSettings.EmotionLevel.EXPRESSIVE -> ProsodyHints(1.0f, 0.8f, 0.85f, allowSurprise = true, allowLaughter = true)
+            NuriSettings.EmotionLevel.FULL_HEARTED -> ProsodyHints(1.0f, 1.0f, 1.0f, allowSurprise = true, allowLaughter = true)
+        }
+    }
+    fun buildRequest(text: String, voiceId: String, level: NuriSettings.EmotionLevel, tier: NuriSettings.Tier, slowerSpeech: Boolean): SpeakRequest {
+        val hints = hintsFor(level, tier)
+        // Bug-hunt fix (NU-1): store the EFFECTIVE (Guided-clamped) level in the
+        // request itself, not the raw stored level — otherwise a future engine
+        // keying off request.emotionLevel would bypass the Guided clamp even
+        // though the prosody hints were clamped.
+        val effective = if (tier == NuriSettings.Tier.GUIDED) TierDefaults.clampEmotionForGuided(level) else level
+        val rate = if (slowerSpeech) hints.rateMultiplier * 0.92f else hints.rateMultiplier
+        return SpeakRequest(text, voiceId, effective, hints.copy(rateMultiplier = rate), slowerSpeech)
+    }
+    fun descriptionFor(level: NuriSettings.EmotionLevel): String = when (level) {
+        NuriSettings.EmotionLevel.CALM -> "Mostly neutral and steady, with very little emotion."
+        NuriSettings.EmotionLevel.GENTLE -> "Soft warmth, with gentle reactions now and then."
+        NuriSettings.EmotionLevel.WARM -> "Natural warmth. Nuri chuckles when something is funny and sounds caring when you are down. This is the usual setting."
+        NuriSettings.EmotionLevel.EXPRESSIVE -> "Lots of feeling: laughs, surprise, and comfort, all in Nuri's same voice."
+        NuriSettings.EmotionLevel.FULL_HEARTED -> "The warmest and most lively setting. Nuri laughs freely and sounds fully engaged."
+    }
+}
+
+/** Honest scaffold engine: reports no voice until the real engine lands. */
+class NotBuiltTtsEngine : TtsEngine {
+    override fun currentVoice(): String? = null
+    fun statusText(): String = "Speaking voice: not built yet. When it arrives, Nuri will always use the same one voice."
+}
