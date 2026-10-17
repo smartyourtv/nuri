@@ -42,6 +42,8 @@ object TherapistSharingText {
 @Composable
 fun FirstInstallScreen(
     modifier: Modifier = Modifier,
+    therapistConsentSeen: Boolean = false,
+    onTherapistConsentRead: () -> Unit = {},
     onModeChosen: (NuriSettings.FirstInstallMode, NuriSettings.AccessMode) -> Unit = { _, _ -> }
 ) {
     var mode by remember { mutableStateOf<NuriSettings.FirstInstallMode?>(null) }
@@ -75,8 +77,24 @@ fun FirstInstallScreen(
                     Text(TherapistSharingText.WHAT_IS_SHARED)
                     Text(TherapistSharingText.ASK_ANYTIME)
                     Text(TherapistSharingText.LEGAL_REP_NOTE)
+                    // NU-5: the stored consent-seen state is READ and shown
+                    // here (it was write-only before), so a setup that was
+                    // already read together says so instead of asking blind.
+                    Text(
+                        com.app.nuri.setup.TherapistConsent.statusText(
+                            com.app.nuri.setup.TherapistConsent.disclosureState(
+                                NuriSettings.FirstInstallMode.THERAPIST, therapistConsentSeen
+                            )
+                        ),
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 } }
-                Button(onClick = { pendingConfirm = NuriSettings.FirstInstallMode.THERAPIST to NuriSettings.AccessMode.HYBRID }) { Text("We have read this together — continue") }
+                Button(onClick = {
+                    // Pressing this IS the attestation — record it (NU-5 write
+                    // side) before the setup confirmation.
+                    onTherapistConsentRead()
+                    pendingConfirm = NuriSettings.FirstInstallMode.THERAPIST to NuriSettings.AccessMode.HYBRID
+                }) { Text("We have read this together — continue") }
                 Text("Continuing means the sharing list above was shown first. Nothing is shared silently in this mode.")
             }
             null -> {}
