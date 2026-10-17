@@ -85,8 +85,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Text("Always listen ('Hey Nuri'), backup, and family summary live in their own sections in this build's code and arrive on this screen with on-device testing — nothing here is pretending to work before it does.")
         // Self-update (brief SS10, Shawn 2026-10-16): opt-in for the public
         // flavor; always on for the private flavor / Managed setups. The
-        // download/install machinery itself is a later build item — this
-        // toggle records the choice today and says so honestly.
+        // executor (scheduled check, verified download, PackageInstaller,
+        // post-update self-test) is built; this toggle is the policy it obeys.
         val accessMode by repo.accessMode.collectAsState(initial = NuriSettings.AccessMode.INDEPENDENT)
         val autoToggle by repo.autoUpdateToggle.collectAsState(initial = null)
         val isPrivateFlavor = BuildConfig.FLAVOR == "private"
@@ -99,6 +99,37 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             onCheckedChange = { checked -> scope.launch { repo.setAutoUpdateToggle(checked) } }
         )
         Text(SelfUpdatePolicy.autoUpdateReason(isPrivateFlavor, accessMode, autoToggle))
+        // Executor bookkeeping (recorded by the background executor, read
+        // here): the quiet after-note once an update lands and passes its
+        // self-check, and the last automatic check's plain-language result.
+        val updateStore = remember(context) { com.app.nuri.update.android.UpdateRuntimeStore(context.applicationContext) }
+        updateStore.afterNote()?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+        updateStore.lastRunResult()?.let { Text("Last automatic check: $it") }
+        // Therapist installs (brief SS5, bug-hunt NU-5): sharing is disclosed,
+        // never hidden — the sharing list and its read-together state stay
+        // visible here permanently, and can be marked read here if setup
+        // never recorded it. Shown for Therapist first-installs only.
+        val firstInstallMode by repo.firstInstallMode.collectAsState(initial = null)
+        val consentSeen by repo.therapistConsentSeen.collectAsState(initial = false)
+        if (com.app.nuri.setup.TherapistConsent.shouldShowSharingCard(firstInstallMode)) {
+            Text("What Nuri shares", style = MaterialTheme.typography.titleLarge)
+            Text(TherapistSharingText.WHAT_IS_SHARED)
+            Text(
+                com.app.nuri.setup.TherapistConsent.statusText(
+                    com.app.nuri.setup.TherapistConsent.disclosureState(firstInstallMode, consentSeen)
+                )
+            )
+            Text(TherapistSharingText.ASK_ANYTIME)
+            if (!consentSeen) {
+                Button(
+                    onClick = {
+                        scope.launch { repo.setTherapistConsentSeen(true) }
+                        feedback = "Done — marked as read together."
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("We have read this together — mark as read") }
+            }
+        }
         // Appearance (brief SS3 readability law — adjustable WITHIN the
         // standard): font steps only scale the standard sizes up; themes are
         // curated AAA presets. Choosing applies everywhere at once, so the
