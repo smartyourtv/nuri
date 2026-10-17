@@ -9,11 +9,11 @@ import java.security.MessageDigest
  * option in the public flavor.
  *
  * This file is the POLICY + VERIFICATION core: pure Kotlin, unit-tested.
- * The download/install EXECUTION (background check scheduling, APK download,
- * PackageInstaller session) is a named remaining build item — it is not
- * invoked anywhere yet, and nothing here pretends an update can install
- * today. What IS decided here, and must never be bypassed by the future
- * executor:
+ * The download/install EXECUTION lives in SelfUpdateExecutor.kt (pure
+ * orchestration, unit-tested with fakes) with Android gateways in
+ * update/android/ — scheduled by a nightly JobService, installed via a
+ * PackageInstaller session, resolved by a self-test at next launch. What IS
+ * decided here, and must never be bypassed by the executor:
  *  - An offer installs only if it is NEWER than the installed version
  *    (no silent downgrade exists — bad updates are fixed forward).
  *  - The downloaded APK's SHA-256 must match the feed's published hash.
