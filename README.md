@@ -1,47 +1,24 @@
-# Nuri — voice-first AI companion for seniors
+# Nuri (working tree)
 
-Nuri is a voice-first companion app designed for older adults: big, calm,
-easy to read, and honest about what it can and can't do. Talk first; screens
-only where they help.
+Voice-first AI companion for seniors — personal/family project, not for sale.
 
-This repository is the **public build** — the distribution source and the
-home of the in-app updater feed.
+- **Brief:** `../files/nuri-project-brief.md` (consolidated, updated 2026-10-16)
+- **Scaffold notes:** `SCAFFOLD.md`
+- **License:** GPL-3.0-or-later for distributed builds (per `../briefs/license-audit.md`
+  — espeak-ng copyleft via the voice engine); ViFork's MIT applies to the upstream
+  skeleton. Repo roots carry `LICENSE` + `THIRD-PARTY-NOTICES`.
 
-## Features
+Status: **features built 2026-10-16** (Phase D + bug hunt): tiers, first-install
+modes, caregiver dashboard, backup/restore, Bluetooth memory, game, readability
+standard + adjustable appearance, self-update policy/verification layer.
+**2026-10-17:** the self-update EXECUTOR is built (nightly scheduled check with
+night/Wi-Fi/charger gating, streaming verified download, PackageInstaller
+install with the Android 12+ no-user-action request and one-tap fallback,
+post-update self-test with caregiver alert + quiet after-note; the per-variant
+feed address is a BuildConfig field, blank until distribution is decided), and
+NU-5 is fixed (therapist consent-seen state is read and surfaced in the
+first-install flow and Settings). 43 unit tests passing in both flavors.
 
-- Conversation, reminders, check-ins, and an offline safety layer that
-  never depends on Wi-Fi
-- Three support tiers (Independent / Supported / Guided) with per-person
-  toggles; the Guided tier never shows games or testing-style prompts
-- "How much feeling Nuri shows": 1 Calm – 5 Full-hearted (default 3 Warm)
-- Optional caregiver dashboard (Hybrid / Managed setup modes) and a
-  consent-first Therapist setup mode — what is shared is always disclosed
-- Encrypted local backup/restore with a paper recovery phrase
-- Bluetooth device memory (10 slots), and a built-in visual puzzle game
-  with big targets — no timers, no fail states, no ads, no in-app purchases
-
-## Readability standard (design law)
-
-Senior-facing screens are very easy to read by default: body text ≥ 20sp,
-headings ≥ 28sp, nothing senior-facing below 16sp, WCAG AAA contrast target,
-dark text on a light uncluttered background. Appearance is adjustable
-**within** the standard — font steps Easy / Easier / Easiest (~1.15x / ~1.3x)
-and four curated themes (Classic, Soft, Dark, Yellow on black), every one
-verified at 7:1 contrast or better — with a live preview in Settings.
-Appearance choices are stored on the device and are never reset by an update.
-
-## Updates
-
-Nuri checks this repository's release feed. The default is the simple path:
-one quiet notification per new version; you tap to update. **Automatic
-updates are an option**: at first install Nuri offers "Update Nuri
-automatically — you won't need to do anything when a new version is ready,"
-and the same choice lives in Settings (default off). Automatic updates are
-verified before installing — the download's SHA-256 fingerprint and signing
-certificate must match the installed app, or the update is refused. Updates
-never change Nuri's interface or voice.
-
-## License
-
-GPL-3.0-or-later — see `LICENSE` and `THIRD-PARTY-NOTICES` at the repo root.
-Third-party components keep their own licenses, listed in the notices file.
+Repos (uploaded 2026-10-17):
+- Private (full source, owner only): `smartyourtv/nuri-private`
+- Public (public flavor only): `smartyourtv/nuri`
