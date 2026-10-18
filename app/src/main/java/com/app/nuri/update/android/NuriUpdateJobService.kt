@@ -28,10 +28,25 @@ class NuriUpdateJobService : JobService() {
                 if (shouldRunNow(app)) {
                     val result = NuriUpdatePlatform.createExecutor(app).runScheduledCheck()
                     NuriUpdatePlatform.runtimeStore(app).recordRunResult(result.detail)
+                    // Crash/error report rule (2026-10-17): failed runs are
+                    // recorded as error reports, not just skipped silently.
+                    // (Refusals carry the gate's evidence — a corrupt or
+                    // wrongly-signed payload lands here, never installed.)
+                    when (result.outcome) {
+                        com.app.nuri.update.UpdateRunOutcome.DOWNLOAD_FAILED,
+                        com.app.nuri.update.UpdateRunOutcome.REFUSED,
+                        com.app.nuri.update.UpdateRunOutcome.INSTALL_FAILED ->
+                            com.app.nuri.reports.android.CrashReports.recordProblem(
+                                "Update check (${result.outcome})", result.detail
+                            )
+                        else -> Unit
+                    }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // A failed check is a skipped check; nothing was changed and
-                // the next period retries. Never crash from a background job.
+                // the next period retries. Never crash from a background job —
+                // but the failure is recorded as an error report (2026-10-17).
+                com.app.nuri.reports.android.CrashReports.recordError("Update check", e)
             } finally {
                 jobFinished(params, false)
             }
