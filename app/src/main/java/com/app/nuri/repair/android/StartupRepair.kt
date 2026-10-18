@@ -130,13 +130,42 @@ object StartupRepair {
                         status = if (gone) RepairStatus.REPAIRED else RepairStatus.REPAIR_FAILED
                     )
                 }
-                UpdateStateReconciler.Action.UpdateJobMissing -> CrashReports.recordRepair(
-                    what = "Nightly update check not scheduled",
-                    evidence = "Nuri tried to schedule its nightly update check at startup, " +
-                        "but the check is still not scheduled afterwards. Automatic update " +
-                        "checks will not run until this is fixed by an app update.",
-                    status = RepairStatus.REPAIR_FAILED
-                )
+                UpdateStateReconciler.Action.UpdateJobMissing -> {
+                    // v0.3.1: the vc3 runner reported "could not fix it"
+                    // without ever attempting a fix. Now it actually tries:
+                    // run the (defensive, laddered) scheduler, then verify
+                    // by re-reading pending jobs — the self-repair rule.
+                    val attempted = runCatching { UpdateScheduler.schedule(app) }.getOrDefault(false)
+                    val scheduledNow = attempted && UpdateScheduler.isScheduled(app)
+                    if (scheduledNow) {
+                        store.clearRepairFailureSignature()
+                        CrashReports.recordRepair(
+                            what = "Nightly update check not scheduled",
+                            evidence = "The nightly update check was not scheduled when Nuri started. " +
+                                "Nuri scheduled it again during this start. " +
+                                "Check after the repair: the nightly check is scheduled — passed.",
+                            status = RepairStatus.REPAIRED
+                        )
+                    } else {
+                        // Dedupe: the same known failure must not produce a
+                        // new report on every launch. One report per app
+                        // version; the scheduler's own failure report
+                        // carries the step-by-step evidence.
+                        val signature = "job-missing-vc${AndroidApkInspector(app).installedVersionCode()}"
+                        if (store.repairFailureSignature() != signature) {
+                            store.setRepairFailureSignature(signature)
+                            CrashReports.recordRepair(
+                                what = "Nightly update check not scheduled",
+                                evidence = "The nightly update check was not scheduled when Nuri started, " +
+                                    "and scheduling it again during this start did not succeed — the " +
+                                    "separate scheduling report from this start carries the technical " +
+                                    "evidence. Update checks will run when Nuri is opened instead. " +
+                                    "This failure is reported once for this app version, not on every start.",
+                                status = RepairStatus.REPAIR_FAILED
+                            )
+                        }
+                    }
+                }
             }
         }
     }

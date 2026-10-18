@@ -110,6 +110,11 @@ private fun NuriRoot() {
             }
         }
         runCatching { repo.touchInteraction(System.currentTimeMillis()) }
+        // In-app update-check fallback (v0.3.1): only acts when the nightly
+        // job is missing and a check is due — see UpdateScheduler.
+        runCatching {
+            com.app.nuri.update.android.UpdateScheduler.launchFallbackCheckIfDue(context.applicationContext)
+        }
     }
 
     when (setupCompleted) {
@@ -157,6 +162,9 @@ private fun NuriShell(repo: SettingsRepository) {
     val context = LocalContext.current
     var selected by remember { mutableStateOf(NuriTab.Home) }
     var homeSub by remember { mutableStateOf(HomeSub.HOME) }
+    // Text typed into the Home screen's help field (v0.3.1): handed to the
+    // Unstuck screen, which runs it through the tolerant matcher on entry.
+    var pendingTypedText by remember { mutableStateOf<String?>(null) }
     val seenTier by repo.tier.collectAsState(initial = NuriSettings.DEFAULT_TIER)
     // Effective tier: flavor hook resolution (private: family safety value wins).
     val effectiveTier = remember(seenTier) {
@@ -186,6 +194,18 @@ private fun NuriShell(repo: SettingsRepository) {
                     onOpenUnstuck = { checkin -> homeSub = if (checkin) HomeSub.UNSTUCK_CHECKIN else HomeSub.UNSTUCK },
                     onOpenShowNuri = { homeSub = HomeSub.SHOWNURI },
                     onOpenGame = { homeSub = HomeSub.GAME },
+                    onAskTyped = { text ->
+                        // The universal help phrase re-opens the two-path
+                        // offer; anything else goes straight to the matcher.
+                        if (com.app.nuri.speech.SafetyIntentParser.parse(text) ==
+                            com.app.nuri.speech.SafetyIntent.HELP_REQUEST
+                        ) {
+                            pendingTypedText = null
+                        } else {
+                            pendingTypedText = text
+                        }
+                        homeSub = HomeSub.UNSTUCK
+                    },
                     gamesAllowedEffective = effective.gamesAllowed,
                     modifier = Modifier.padding(padding),
                 )
@@ -195,6 +215,8 @@ private fun NuriShell(repo: SettingsRepository) {
                     onOpenShowNuri = { homeSub = HomeSub.SHOWNURI },
                     onBack = { homeSub = HomeSub.HOME },
                     startInCheckIn = homeSub == HomeSub.UNSTUCK_CHECKIN,
+                    initialText = pendingTypedText,
+                    onInitialTextConsumed = { pendingTypedText = null },
                     modifier = Modifier.padding(padding),
                 )
                 HomeSub.SHOWNURI -> ShowNuriScreen(

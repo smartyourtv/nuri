@@ -98,8 +98,14 @@ data class CrashReport(
         /** Plain-language summary lines — the only wording source. */
         fun crashSummary(): String =
             "Nuri stopped unexpectedly. This report was saved so the problem can be found and fixed."
-        fun errorSummary(source: String): String =
-            "Something in Nuri went wrong, but Nuri kept running. (Where: $source.)"
+        fun errorSummary(source: String, exceptionSimpleName: String? = null): String =
+            "Something in Nuri went wrong, but Nuri kept running. (Where: $source.)" +
+                // v0.3.1: name the underlying error type in the summary
+                // itself (the full class + stack are in the report body),
+                // so even the list view — or a screenshot of it — is
+                // decisive evidence.
+                (exceptionSimpleName?.takeIf { it.isNotBlank() }
+                    ?.let { " (Error type: $it.)" } ?: "")
         fun repairSummary(what: String, status: RepairStatus): String = when (status) {
             RepairStatus.REPAIRED ->
                 "Nuri found a problem in its own saved information and fixed it. ($what.)"

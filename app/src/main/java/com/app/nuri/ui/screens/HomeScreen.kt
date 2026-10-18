@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -39,10 +41,14 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * The senior home (v0.3.0 — sweep #6: the one-voice home the brief
- * specifies, replacing the scaffold placeholder). Big buttons, one job
- * each, every button explaining itself (UX rule). The layout is now the
- * learned layout: future updates add, never rearrange (interface freeze).
+ * The senior home. v0.3.1 (Shawn on-device report 2026-10-18: "bare with
+ * no help features and nowhere to type"): HOME IS HELP-FIRST. The first
+ * things on this screen — biggest, above everything else — are the help
+ * controls: the giant "I need help" button, "Show Nuri", and a VISIBLE
+ * TEXT FIELD with an Ask button, because until the voice engine lands,
+ * typing here IS how you talk to Nuri. Everything that was on this
+ * screen before stays below, in the same order (interface freeze: add
+ * and promote, never remove).
  *
  * Voice note, honestly: the speaking voice itself is still the gated
  * engine (sweep #1); this home is fully usable by touch today, and the
@@ -54,6 +60,7 @@ fun HomeScreen(
     onOpenUnstuck: (startInCheckIn: Boolean) -> Unit,
     onOpenShowNuri: () -> Unit,
     onOpenGame: () -> Unit,
+    onAskTyped: (String) -> Unit,
     gamesAllowedEffective: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -73,6 +80,8 @@ fun HomeScreen(
         FlavorHooks.pendingSuggestion(context, fontStep.name, emotion.name, toggles.gamesAllowed ?: true)
     }
 
+    var typedText by remember { androidx.compose.runtime.mutableStateOf("") }
+
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -80,15 +89,39 @@ fun HomeScreen(
         Text("Nuri", style = MaterialTheme.typography.headlineLarge)
         Text("$greeting. It's $todayLine.", style = MaterialTheme.typography.bodyLarge)
 
-        Button(onClick = { onOpenUnstuck(false) }, modifier = Modifier.fillMaxWidth()) {
+        // === HELP-FIRST BLOCK (v0.3.1) — the first, biggest things here.
+        Button(
+            onClick = { onOpenUnstuck(false) },
+            modifier = Modifier.fillMaxWidth().height(84.dp),
+        ) {
             Text("I need help", style = MaterialTheme.typography.labelLarge)
         }
         Text("For anything confusing — the phone, the TV, a letter, a worry. Tell me, or show me a picture.")
 
-        Button(onClick = onOpenShowNuri, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = onOpenShowNuri,
+            modifier = Modifier.fillMaxWidth().height(72.dp),
+        ) {
             Text("Show Nuri", style = MaterialTheme.typography.labelLarge)
         }
         Text("Take a picture of something and I'll read it or tell you what it is.")
+
+        Text("Or type it here:", style = MaterialTheme.typography.titleLarge)
+        androidx.compose.material3.OutlinedTextField(
+            value = typedText,
+            onValueChange = { typedText = it },
+            label = { Text("Type what you need help with", style = MaterialTheme.typography.labelMedium) },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2,
+        )
+        Button(
+            onClick = { if (typedText.isNotBlank()) { onAskTyped(typedText.trim()); typedText = "" } },
+            modifier = Modifier.fillMaxWidth().height(72.dp),
+        ) {
+            Text("Ask Nuri", style = MaterialTheme.typography.labelLarge)
+        }
+        Text("Type it in your own words — spelling and exact words don't matter. Nuri will read it back to check it understood.")
+        // === end help-first block; everything below is the v0.3.0 home, unchanged order.
 
         Button(onClick = { onOpenUnstuck(true) }, modifier = Modifier.fillMaxWidth()) {
             Text("Morning check-in", style = MaterialTheme.typography.labelLarge)
@@ -178,5 +211,9 @@ fun HomeScreen(
                 }
             }
         }
+
+        // Build identity (v0.3.1): always visible at the end of Home so any
+        // screenshot or support conversation can name the exact build.
+        Text("Nuri version ${com.app.nuri.BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall)
     }
 }

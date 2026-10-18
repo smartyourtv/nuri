@@ -54,8 +54,40 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         com.app.nuri.reports.CrashReportsScreen(onBack = { showReports = false }, modifier = modifier)
         return
     }
+    // Family views (v0.3.1): the caregiver summary, help diary, and
+    // licenses were buried at the very end of this long screen in v0.3.0.
+    // They are now top-of-Settings sub-screen swaps like the reports view.
+    var showDashboard by remember { mutableStateOf(false) }
+    var showDiary by remember { mutableStateOf(false) }
+    var showLicenses by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val repo = remember(context) { SettingsRepository(context.applicationContext) }
+    if (showLicenses) {
+        Column(modifier.padding(24.dp)) { LicensesView(onBack = { showLicenses = false }) }
+        return
+    }
+    if (showDiary) {
+        Column(modifier) { DiaryView(repo = repo, onBack = { showDiary = false }) }
+        return
+    }
+    if (showDashboard) {
+        val dashTier by repo.tier.collectAsState(initial = NuriSettings.DEFAULT_TIER)
+        val dashAccess by repo.accessMode.collectAsState(initial = NuriSettings.AccessMode.INDEPENDENT)
+        val dashCheckIns by repo.checkIns.collectAsState(initial = emptyList())
+        val dashMeds by repo.medConfirmations.collectAsState(initial = emptyList())
+        val dashAlerts by repo.safetyAlerts.collectAsState(initial = emptyList())
+        val dashDiary by repo.diary.collectAsState(initial = emptyList())
+        Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            androidx.compose.material3.OutlinedButton(onClick = { showDashboard = false }, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings", style = MaterialTheme.typography.labelLarge) }
+            CaregiverDashboardScreen(
+                tier = dashTier, accessMode = dashAccess, checkIns = dashCheckIns,
+                medConfirmations = dashMeds, safetyAlerts = dashAlerts, diary = dashDiary,
+                todayKey = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()),
+                settingsRepository = repo,
+            )
+        }
+        return
+    }
     val scope = rememberCoroutineScope()
     val storedEmotion by repo.emotionLevel.collectAsState(initial = NuriSettings.DEFAULT_EMOTION_LEVEL)
     val tier by repo.tier.collectAsState(initial = NuriSettings.DEFAULT_TIER)
@@ -70,6 +102,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val effective = EffectiveSettingsResolver.resolve(tier, storedToggles)
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Settings", style = MaterialTheme.typography.headlineMedium)
+        // Family & help quick links (v0.3.1) — first block on this screen.
+        Text("Family & help", style = MaterialTheme.typography.titleLarge)
+        Button(onClick = { showDashboard = true }, modifier = Modifier.fillMaxWidth()) { Text("Family summary (for the caregiver)", style = MaterialTheme.typography.labelLarge) }
+        Button(onClick = { showDiary = true }, modifier = Modifier.fillMaxWidth()) { Text("See the help diary (what Nuri helped with)", style = MaterialTheme.typography.labelLarge) }
+        Button(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) { Text("Licenses & attributions", style = MaterialTheme.typography.labelLarge) }
+        Text("Family names, the safe word, medicines, and snapshots are set up in the 'Family & help setup' section further down this screen.")
         Text("How much feeling Nuri shows", style = MaterialTheme.typography.titleLarge)
         Text("This changes how warm and lively Nuri sounds. It never changes Nuri's voice — it is always the same voice.")
         Box {
@@ -89,7 +127,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
         if (feedback.isNotEmpty()) Text(feedback, style = MaterialTheme.typography.titleMedium)
         Text("Games allowed here: ${if (effective.gamesAllowed) "yes" else "no"} (Guided setups never show games or tests).")
-        Text("Always listen ('Hey Nuri'), backup, and family summary live in their own sections in this build's code and arrive on this screen with on-device testing — nothing here is pretending to work before it does.")
+        Text("Always listen ('Hey Nuri') and backup arrive on this screen with on-device testing — nothing here is pretending to work before it does. The family summary is at the top of this screen.")
         // Self-update (brief SS10, Shawn 2026-10-16): opt-in for the public
         // flavor; always on for the private flavor / Managed setups. The
         // executor (scheduled check, verified download, PackageInstaller,

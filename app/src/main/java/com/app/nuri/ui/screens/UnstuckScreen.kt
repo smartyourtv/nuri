@@ -85,6 +85,8 @@ fun UnstuckScreen(
     onOpenShowNuri: () -> Unit,
     onBack: () -> Unit,
     startInCheckIn: Boolean = false,
+    initialText: String? = null,
+    onInitialTextConsumed: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -175,7 +177,38 @@ fun UnstuckScreen(
         }
     }
 
+    /**
+     * The ONE routing path for described/typed problems (used by the
+     * DESCRIBE form below AND by text typed on the Home screen, v0.3.1):
+     * help phrase → back to the offer; strong match → start the helper;
+     * fair match → mirror-confirm; no match → the no-match ladder.
+     */
+    fun routeDescribeText(text: String) {
+        if (com.app.nuri.speech.SafetyIntentParser.parse(text) == com.app.nuri.speech.SafetyIntent.HELP_REQUEST) {
+            mode = UnstuckMode.ENTRY; return
+        }
+        val matches = HelperEngine.matchAll(text)
+        val best = matches.firstOrNull()
+        when {
+            best == null || best.confidence == TolerantMatch.Confidence.NONE -> {
+                noMatchChoices = matches.map { it.helper }.ifEmpty { NoMatchLadder.evergreenChoices() }
+                mode = UnstuckMode.NOMATCH
+            }
+            best.confidence == TolerantMatch.Confidence.STRONG -> startHelper(best.helper)
+            else -> { mirrorMatch = best; mode = UnstuckMode.MIRROR }
+        }
+    }
+
     LaunchedEffect(Unit) { caregiverName = repository.caregiverName.first() }
+
+    // Home-screen typed text (v0.3.1): route it exactly as if it had been
+    // typed into the DESCRIBE form, then clear the hand-off.
+    LaunchedEffect(initialText) {
+        if (!initialText.isNullOrBlank()) {
+            routeDescribeText(initialText)
+            onInitialTextConsumed()
+        }
+    }
 
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("I need help", style = MaterialTheme.typography.headlineMedium)
@@ -231,22 +264,7 @@ fun UnstuckScreen(
                 OutlinedTextField(value = describeText, onValueChange = { describeText = it },
                     label = { Text("What's happening?", style = MaterialTheme.typography.labelMedium) },
                     modifier = Modifier.fillMaxWidth(), minLines = 2)
-                Button(onClick = {
-                    // Voice-intent seam: the universal help phrase re-opens the offer.
-                    if (com.app.nuri.speech.SafetyIntentParser.parse(describeText) == com.app.nuri.speech.SafetyIntent.HELP_REQUEST) {
-                        mode = UnstuckMode.ENTRY; return@Button
-                    }
-                    val matches = HelperEngine.matchAll(describeText)
-                    val best = matches.firstOrNull()
-                    when {
-                        best == null || best.confidence == TolerantMatch.Confidence.NONE -> {
-                            noMatchChoices = matches.map { it.helper }.ifEmpty { NoMatchLadder.evergreenChoices() }
-                            mode = UnstuckMode.NOMATCH
-                        }
-                        best.confidence == TolerantMatch.Confidence.STRONG -> startHelper(best.helper)
-                        else -> { mirrorMatch = best; mode = UnstuckMode.MIRROR }
-                    }
-                }, modifier = Modifier.fillMaxWidth()) { Text("That's what's happening", style = MaterialTheme.typography.labelLarge) }
+                Button(onClick = { routeDescribeText(describeText) }, modifier = Modifier.fillMaxWidth()) { Text("That's what's happening", style = MaterialTheme.typography.labelLarge) }
                 OutlinedButton(onClick = { mode = UnstuckMode.ENTRY }, modifier = Modifier.fillMaxWidth()) { Text("Back", style = MaterialTheme.typography.labelLarge) }
             }
 

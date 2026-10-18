@@ -28,6 +28,8 @@ class NuriUpdateJobService : JobService() {
                 if (shouldRunNow(app)) {
                     val result = NuriUpdatePlatform.createExecutor(app).runScheduledCheck()
                     NuriUpdatePlatform.runtimeStore(app).recordRunResult(result.detail)
+                    // So the launch fallback (v0.3.1) doesn't immediately re-run.
+                    NuriUpdatePlatform.runtimeStore(app).markCheckAttempt(System.currentTimeMillis())
                     // Crash/error report rule (2026-10-17): failed runs are
                     // recorded as error reports, not just skipped silently.
                     // (Refusals carry the gate's evidence — a corrupt or

@@ -81,7 +81,7 @@ object CrashReports {
                 persist(
                     buildReport(
                         kind = ReportKind.ERROR,
-                        summaryLine = CrashReport.errorSummary(source),
+                        summaryLine = CrashReport.errorSummary(source, throwable.javaClass.simpleName),
                         throwable = throwable
                     )
                 )

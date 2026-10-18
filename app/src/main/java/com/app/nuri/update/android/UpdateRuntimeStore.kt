@@ -26,6 +26,11 @@ class UpdateRuntimeStore(context: Context) : PendingUpdateStore {
         const val KEY_LAST_RESULT = "last_run_result"
         const val KEY_AFTER_NOTE = "after_note"
         const val KEY_ALERTS = "caregiver_alerts"
+        // v0.3.1: report dedupe — a known failure is reported once per
+        // distinct signature, not on every launch.
+        const val KEY_SCHEDULE_FAILURE_SIG = "schedule_failure_signature"
+        const val KEY_REPAIR_FAILURE_SIG = "repair_failure_signature"
+        const val KEY_LAST_CHECK_ATTEMPT = "last_check_attempt_millis"
         const val MAX_ALERTS = 10
     }
 
@@ -65,6 +70,34 @@ class UpdateRuntimeStore(context: Context) : PendingUpdateStore {
     }
 
     fun afterNote(): String? = prefs.getString(KEY_AFTER_NOTE, null)
+
+    // --- v0.3.1 dedupe + fallback bookkeeping --------------------------
+
+    fun scheduleFailureSignature(): String? = prefs.getString(KEY_SCHEDULE_FAILURE_SIG, null)
+
+    fun setScheduleFailureSignature(signature: String) {
+        prefs.edit().putString(KEY_SCHEDULE_FAILURE_SIG, signature).apply()
+    }
+
+    fun clearScheduleFailureSignature() {
+        prefs.edit().remove(KEY_SCHEDULE_FAILURE_SIG).apply()
+    }
+
+    fun repairFailureSignature(): String? = prefs.getString(KEY_REPAIR_FAILURE_SIG, null)
+
+    fun setRepairFailureSignature(signature: String) {
+        prefs.edit().putString(KEY_REPAIR_FAILURE_SIG, signature).apply()
+    }
+
+    fun clearRepairFailureSignature() {
+        prefs.edit().remove(KEY_REPAIR_FAILURE_SIG).apply()
+    }
+
+    fun lastCheckAttemptMillis(): Long = prefs.getLong(KEY_LAST_CHECK_ATTEMPT, 0L)
+
+    fun markCheckAttempt(nowMillis: Long) {
+        prefs.edit().putLong(KEY_LAST_CHECK_ATTEMPT, nowMillis).apply()
+    }
 
     fun recordCaregiverAlert(title: String, detail: String) {
         val kept = (caregiverAlerts() + "$title — $detail").takeLast(MAX_ALERTS)

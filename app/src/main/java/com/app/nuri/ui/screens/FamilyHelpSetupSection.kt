@@ -53,29 +53,6 @@ fun FamilyHelpSetupSection() {
     val context = LocalContext.current
     val repo = remember(context) { SettingsRepository(context.applicationContext) }
     val scope = rememberCoroutineScope()
-    var showLicenses by remember { mutableStateOf(false) }
-    var showDiary by remember { mutableStateOf(false) }
-    var showDashboard by remember { mutableStateOf(false) }
-    if (showLicenses) { LicensesView(onBack = { showLicenses = false }); return }
-    if (showDiary) { DiaryView(repo = repo, onBack = { showDiary = false }); return }
-    if (showDashboard) {
-        val dashTier by repo.tier.collectAsState(initial = NuriSettings.DEFAULT_TIER)
-        val dashAccess by repo.accessMode.collectAsState(initial = NuriSettings.AccessMode.INDEPENDENT)
-        val dashCheckIns by repo.checkIns.collectAsState(initial = emptyList())
-        val dashMeds by repo.medConfirmations.collectAsState(initial = emptyList())
-        val dashAlerts by repo.safetyAlerts.collectAsState(initial = emptyList())
-        val dashDiary by repo.diary.collectAsState(initial = emptyList())
-        Column {
-            OutlinedButton(onClick = { showDashboard = false }, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
-            CaregiverDashboardScreen(
-                tier = dashTier, accessMode = dashAccess, checkIns = dashCheckIns,
-                medConfirmations = dashMeds, safetyAlerts = dashAlerts, diary = dashDiary,
-                todayKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()),
-                settingsRepository = repo,
-            )
-        }
-        return
-    }
 
     val caregiverName by repo.caregiverName.collectAsState(initial = "")
     val safeWord by repo.safeWord.collectAsState(initial = "")
@@ -223,16 +200,16 @@ fun FamilyHelpSetupSection() {
         Text(it)
     }
 
-    // Diary + licenses + dashboard
-    Button(onClick = { showDashboard = true }, modifier = Modifier.fillMaxWidth()) { Text("Family summary (for the caregiver)") }
-    Button(onClick = { showDiary = true }, modifier = Modifier.fillMaxWidth()) { Text("See the help diary (what Nuri helped with)") }
-    Button(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) { Text("Licenses & attributions") }
+    // Diary + licenses + dashboard moved to the TOP of Settings in
+    // v0.3.1 (discoverability: they were buried at the end of this long
+    // section). The buttons live in SettingsScreen now; the views are
+    // shared from this file (DiaryView / LicensesView below).
     if (note.isNotEmpty()) Text(note, style = MaterialTheme.typography.titleMedium)
     Text("Vision: Show Nuri reads and identifies on this phone (ML Kit). No cloud vision service is connected in this build — if a photo can't be read, Nuri says so and offers to ask ${FlavorHooks.askNameOverride() ?: "the caregiver"} with the photo.")
 }
 
 @Composable
-private fun DiaryView(repo: SettingsRepository, onBack: () -> Unit) {
+fun DiaryView(repo: SettingsRepository, onBack: () -> Unit) {
     val diary by repo.diary.collectAsState(initial = emptyList())
     val alerts by repo.safetyAlerts.collectAsState(initial = emptyList())
     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -249,7 +226,7 @@ private fun DiaryView(repo: SettingsRepository, onBack: () -> Unit) {
 }
 
 @Composable
-private fun LicensesView(onBack: () -> Unit) {
+fun LicensesView(onBack: () -> Unit) {
     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Licenses & attributions", style = MaterialTheme.typography.headlineMedium)
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
