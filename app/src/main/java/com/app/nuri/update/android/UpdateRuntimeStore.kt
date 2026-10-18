@@ -22,6 +22,7 @@ class UpdateRuntimeStore(context: Context) : PendingUpdateStore {
     private companion object {
         const val KEY_PENDING_CODE = "pending_version_code"
         const val KEY_PENDING_NAME = "pending_version_name"
+        const val KEY_PENDING_WRITTEN_AT = "pending_written_at"
         const val KEY_LAST_RESULT = "last_run_result"
         const val KEY_AFTER_NOTE = "after_note"
         const val KEY_ALERTS = "caregiver_alerts"
@@ -38,12 +39,20 @@ class UpdateRuntimeStore(context: Context) : PendingUpdateStore {
         prefs.edit()
             .putInt(KEY_PENDING_CODE, pending.versionCode)
             .putString(KEY_PENDING_NAME, pending.versionName)
+            // The startup self-repair reconcile needs the marker's age to
+            // prove staleness; records written before this key existed
+            // read as 0 = unknown age, and are never cleared as stale.
+            .putLong(KEY_PENDING_WRITTEN_AT, System.currentTimeMillis())
             .apply()
     }
 
     override fun clear() {
-        prefs.edit().remove(KEY_PENDING_CODE).remove(KEY_PENDING_NAME).apply()
+        prefs.edit().remove(KEY_PENDING_CODE).remove(KEY_PENDING_NAME)
+            .remove(KEY_PENDING_WRITTEN_AT).apply()
     }
+
+    /** When the pending marker was written (0 = unknown / pre-existing record). */
+    fun pendingWrittenAtMillis(): Long = prefs.getLong(KEY_PENDING_WRITTEN_AT, 0L)
 
     fun recordRunResult(detail: String) {
         prefs.edit().putString(KEY_LAST_RESULT, detail).apply()
