@@ -176,5 +176,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Button(onClick = { showReports = true }, modifier = Modifier.fillMaxWidth()) {
             Text("See crash & error reports")
         }
+        // v0.3.0 additions (Unstuck family setup, medicine schedule, setup
+        // checklists, snapshots, diary, licenses) — appended section; the
+        // cards above are unchanged (interface freeze).
+        FamilyHelpSetupSection()
     }
 }

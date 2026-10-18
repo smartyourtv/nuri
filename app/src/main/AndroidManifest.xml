@@ -14,9 +14,26 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- v0.3.0 Unstuck / Show Nuri / safety additions. Each permission is
+         requested at runtime at the moment of use and degrades honestly:
+         CAMERA — Show Nuri capture only (system camera via intent).
+         ACCESS_NOTIFICATION_POLICY — lets Nuri turn Do Not Disturb off
+         itself; without the grant, the helper walks through instead.
+         CALL_PHONE — direct emergency/family calls; without it, the
+         dialer opens with the number filled in (still one tap).
+         ACCESS_COARSE_LOCATION — "Where am I?" answers; without it, the
+         helper works from landmarks and street signs. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:name=".NuriApplication"
         android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="Nuri"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
@@ -38,5 +55,21 @@
             android:name=".update.android.NuriUpdateJobService"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- Medicine reminders (v0.3.0): dose + missed-dose checks. -->
+        <receiver
+            android:name=".unstuck.android.MedReminderReceiver"
+            android:exported="false" />
+
+        <!-- Show Nuri camera capture: photos land in app-private storage. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

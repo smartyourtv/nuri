@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.app.nuri.backup.BackupCrypto
 import com.app.nuri.backup.DriveAppDataBackup
 import com.app.nuri.backup.GmailSnapshotBackup
-import com.app.nuri.backup.PaperRecoveryPhrase
+import com.app.nuri.backup.CaregiverMediatedRecovery
 import com.app.nuri.bluetooth.BtDiagnostics
 import com.app.nuri.bluetooth.BtSlotManager
 import com.app.nuri.google.GoogleDiagnostics
@@ -29,13 +29,13 @@ class DiagnosticsViewModel : ViewModel() {
     private fun buildChecks(runBackupTest: Boolean): List<DiagnosticCheck> {
         val backupTest = if (runBackupTest) BackupCrypto.selfTest() else null
         return listOf(
-            DiagnosticCheck("App", "OK", "Nuri is running (Phase D build)."),
+            DiagnosticCheck("App", "OK", "Nuri is running (v0.3.0 — Unstuck helpers, Show Nuri, safety actions)."),
             DiagnosticCheck("Voice", "Not built yet", NotBuiltTtsEngine().statusText()),
             DiagnosticCheck("Always listen", "Not built yet", alwaysListen.diagnosticsText()),
-            DiagnosticCheck("Safety check-ins", "Built — offline design, actions are stubs", OfflineSafetyHandlers.diagnosticsText()),
+            DiagnosticCheck("Safety check-ins", "Built — offline design", OfflineSafetyHandlers.diagnosticsText()),
             DiagnosticCheck("Encrypted backup (on this phone)", if (backupTest == null) "Not tested yet" else if (backupTest.ok) "OK" else "Needs attention",
                 backupTest?.detail ?: "Tap the check button to test saving and restoring an encrypted copy."),
-            DiagnosticCheck("Paper recovery phrase", "Ready", PaperRecoveryPhrase.statusText()),
+            DiagnosticCheck("Backup recovery", "Caregiver-mediated", CaregiverMediatedRecovery.statusText(com.app.nuri.config.NuriSettings.AccessMode.HYBRID)),
             DiagnosticCheck("Google Drive backup", "Not connected", DriveAppDataBackup().statusText()),
             DiagnosticCheck("Email snapshot backup", "Not connected", GmailSnapshotBackup().statusText()),
             DiagnosticCheck("Google account helpers", "Not connected", GoogleDiagnostics.text()),

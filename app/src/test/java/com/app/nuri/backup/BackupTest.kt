@@ -13,7 +13,7 @@ class BackupTest {
         try { BackupCrypto.decrypt(enc, "wrong-passphrase"); fail("should throw") } catch (e: Exception) { /* expected */ }
     }
     @Test fun selfTestPasses() { assertTrue(BackupCrypto.selfTest().ok) }
-    @Test fun paperPhraseValidates() {
-        val g = PaperRecoveryPhrase.generate(); assertEquals(12, g.words.size); assertTrue(PaperRecoveryPhrase.validate(g.words, g.checksum))
-    }
+    // The paper recovery phrase test was REMOVED with the feature itself
+    // (Shawn rejected the phrase 2026-10-17, "too risky"). Its replacement
+    // is covered by CaregiverRecoveryTest.
 }

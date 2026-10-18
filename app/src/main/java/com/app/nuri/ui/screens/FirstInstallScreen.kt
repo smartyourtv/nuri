@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.app.nuri.config.FlavorHooks
 import com.app.nuri.config.NuriSettings
 
 /**
@@ -44,7 +45,12 @@ fun FirstInstallScreen(
     modifier: Modifier = Modifier,
     therapistConsentSeen: Boolean = false,
     onTherapistConsentRead: () -> Unit = {},
-    onModeChosen: (NuriSettings.FirstInstallMode, NuriSettings.AccessMode) -> Unit = { _, _ -> }
+    onModeChosen: (NuriSettings.FirstInstallMode, NuriSettings.AccessMode) -> Unit = { _, _ -> },
+    // v0.3.0: the family setup captured in the CAREGIVER branch (caregiver
+    // name, safe word, deceased-spouse response, emergency contact, and
+    // the two paper/Google checklist steps). Defaults keep older callers.
+    onFamilySetup: (caregiverName: String, safeWord: String, spouseModeName: String, emergencyName: String, emergencyNumber: String, sealedPaper: Boolean, recoveryChain: Boolean) -> Unit =
+        { _, _, _, _, _, _, _ -> }
 ) {
     var mode by remember { mutableStateOf<NuriSettings.FirstInstallMode?>(null) }
     var pendingConfirm by remember { mutableStateOf<Pair<NuriSettings.FirstInstallMode, NuriSettings.AccessMode>?>(null) }
@@ -65,10 +71,45 @@ fun FirstInstallScreen(
                 Button(onClick = { pendingConfirm = NuriSettings.FirstInstallMode.INDEPENDENT to NuriSettings.AccessMode.INDEPENDENT }) { Text("Use 'Just me'") }
             }
             NuriSettings.FirstInstallMode.CAREGIVER -> {
+                // v0.3.0: the family setup itself (was a placeholder note).
+                var cgName by remember { mutableStateOf("") }
+                var cgWord by remember { mutableStateOf("") }
+                var cgSpouse by remember { mutableStateOf(com.app.nuri.unstuck.SpouseResponseMode.UNSET) }
+                var cgEmName by remember { mutableStateOf("") }
+                var cgEmNumber by remember { mutableStateOf("") }
+                var cgSealed by remember { mutableStateOf(false) }
+                var cgChain by remember { mutableStateOf(false) }
+                Text("Set up the help basics now — they can all be changed later in Settings.", style = MaterialTheme.typography.titleMedium)
+                androidx.compose.material3.OutlinedTextField(value = cgName, onValueChange = { cgName = it }, label = { Text("Your name (the caregiver)") }, modifier = Modifier.fillMaxWidth())
+                Text("When help is hard, Nuri offers to ask for a person by name." + (FlavorHooks.askNameOverride()?.let { " (This edition says 'ask $it'.)" } ?: " (Your name, as written above.)"))
+                androidx.compose.material3.OutlinedTextField(value = cgWord, onValueChange = { cgWord = it }, label = { Text("Family safe word") }, modifier = Modifier.fillMaxWidth())
+                Text("A word only your family knows. On any 'emergency' call claiming to be family, Nuri asks whether the caller knew it — voice-copying scammers won't.")
+                Text("If they ask for a husband or wife who has passed, how should Nuri answer? The family chooses; Nuri never improvises.")
+                com.app.nuri.unstuck.SpouseResponseMode.values().forEach { m ->
+                    Button(onClick = { cgSpouse = m }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (m == cgSpouse) "${m.name.replace('_', ' ')} — chosen" else m.name.replace('_', ' '))
+                    }
+                    Text(com.app.nuri.unstuck.SpouseResponse.setupExplanation(m))
+                }
+                androidx.compose.material3.OutlinedTextField(value = cgEmName, onValueChange = { cgEmName = it }, label = { Text("Emergency contact name") }, modifier = Modifier.fillMaxWidth())
+                androidx.compose.material3.OutlinedTextField(value = cgEmNumber, onValueChange = { cgEmNumber = it }, label = { Text("Emergency contact number") }, modifier = Modifier.fillMaxWidth())
+                androidx.compose.foundation.layout.Row {
+                    androidx.compose.material3.Checkbox(checked = cgSealed, onCheckedChange = { cgSealed = it })
+                    Text("Sealed paper copy of their Google password, kept by you. (Their password — held on paper by family. Nuri never sees it.)")
+                }
+                androidx.compose.foundation.layout.Row {
+                    androidx.compose.material3.Checkbox(checked = cgChain, onCheckedChange = { cgChain = it })
+                    Text("Google recovery chain done: you are their recovery contact, and Inactive Account Manager is named.")
+                }
                 Text("How much would you like to see?", style = MaterialTheme.typography.titleMedium)
-                Button(onClick = { pendingConfirm = NuriSettings.FirstInstallMode.CAREGIVER to NuriSettings.AccessMode.HYBRID }, modifier = Modifier.fillMaxWidth()) { Text("Shared — they keep full control, I see a summary too") }
-                Text("Routines, contacts, and alert settings come next. (Those setup screens are placeholders in this build.)")
-                Button(onClick = { pendingConfirm = NuriSettings.FirstInstallMode.CAREGIVER to NuriSettings.AccessMode.MANAGED }, modifier = Modifier.fillMaxWidth()) { Text("I look after the settings — they just talk to Nuri") }
+                Button(onClick = {
+                    onFamilySetup(cgName.trim(), cgWord.trim(), cgSpouse.name, cgEmName.trim(), cgEmNumber.trim(), cgSealed, cgChain)
+                    pendingConfirm = NuriSettings.FirstInstallMode.CAREGIVER to NuriSettings.AccessMode.HYBRID
+                }, modifier = Modifier.fillMaxWidth()) { Text("Shared — they keep full control, I see a summary too") }
+                Button(onClick = {
+                    onFamilySetup(cgName.trim(), cgWord.trim(), cgSpouse.name, cgEmName.trim(), cgEmNumber.trim(), cgSealed, cgChain)
+                    pendingConfirm = NuriSettings.FirstInstallMode.CAREGIVER to NuriSettings.AccessMode.MANAGED
+                }, modifier = Modifier.fillMaxWidth()) { Text("I look after the settings — they just talk to Nuri") }
                 Text("Best when the person needs the simplest experience. You apply updates and changes for them.")
             }
             NuriSettings.FirstInstallMode.THERAPIST -> {

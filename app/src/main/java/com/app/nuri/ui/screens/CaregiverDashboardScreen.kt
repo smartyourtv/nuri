@@ -13,21 +13,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.app.nuri.config.FlavorHooks
 import com.app.nuri.config.NuriSettings
-import com.app.nuri.dashboard.SampleDashboardRepository
+import com.app.nuri.dashboard.RealDashboardRepository
+import com.app.nuri.repository.SettingsRepository
+import com.app.nuri.unstuck.CheckInRecord
+import com.app.nuri.unstuck.DiaryEntry
+import com.app.nuri.unstuck.MedConfirmation
+import com.app.nuri.unstuck.SafetyAlert
 
-/** Caregiver dashboard — real tier-scoped composable over sample data.
+/** Caregiver dashboard — real records (sweep #14).
  *  Framing is law: conversations, not surveillance. */
 @Composable
 fun CaregiverDashboardScreen(
     tier: NuriSettings.Tier,
     accessMode: NuriSettings.AccessMode,
+    checkIns: List<CheckInRecord>,
+    medConfirmations: List<MedConfirmation>,
+    safetyAlerts: List<SafetyAlert>,
+    diary: List<DiaryEntry>,
+    todayKey: String,
+    settingsRepository: SettingsRepository,
     modifier: Modifier = Modifier
 ) {
-    val data = remember(tier, accessMode) { SampleDashboardRepository().dataFor(tier, accessMode) }
+    val data = remember(tier, accessMode, checkIns, medConfirmations, safetyAlerts, diary) {
+        RealDashboardRepository(checkIns, medConfirmations, safetyAlerts, diary, todayKey).dataFor(tier, accessMode)
+    }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Family summary", style = MaterialTheme.typography.headlineMedium)
-        Text("This is a gentle summary of conversations and check-ins — not surveillance. Sample wording only in this build; real records are not collected yet.")
+        Text("This is a gentle summary of conversations and check-ins — not surveillance. It shows Nuri's real records; when there are none yet, it says so.")
         data.noDataReason?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
         data.weeklySummary?.let { Card { Column(Modifier.padding(16.dp)) { Text("This week", style = MaterialTheme.typography.titleMedium); Text(it) } } }
         data.dailySummary?.let { Card { Column(Modifier.padding(16.dp)) { Text("Today", style = MaterialTheme.typography.titleMedium); Text(it) } } }
@@ -36,8 +50,11 @@ fun CaregiverDashboardScreen(
             data.alerts.forEach { a -> Card { Column(Modifier.padding(16.dp)) { Text(a.title, style = MaterialTheme.typography.titleMedium); Text(a.detail); Text(a.whenText) } } }
         }
         if (data.activityLog.isNotEmpty()) {
-            Text("Activity log", style = MaterialTheme.typography.titleLarge)
+            Text("Help & check-in diary", style = MaterialTheme.typography.titleLarge)
             data.activityLog.forEach { e -> Text("${e.whenText}: ${e.what}") }
         }
+        // Flavor-provided caregiver section (family layer in the private
+        // edition; renders nothing in the public edition).
+        FlavorHooks.CaregiverFamilySection(settingsRepository)
     }
 }

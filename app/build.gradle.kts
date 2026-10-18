@@ -14,8 +14,14 @@ android {
         // Deliberately targets old phones; interface freeze starts here.
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0-scaffold"
+        versionCode = 3
+        versionName = "0.3.0"
+
+        // Phones only: the floor device is a Galaxy S10-class ARM phone.
+        // Without this, ML Kit's bundled models ship native libraries for
+        // x86/x86_64 too and the APK balloons past 110 MB; ARM-only keeps
+        // the install small for a senior's phone.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -71,10 +77,12 @@ android {
         create("public") {
             dimension = "edition"
             buildConfigField("String", "UPDATE_FEED_URL", "\"\"")
+            buildConfigField("boolean", "IS_PRIVATE_BUILD", "false")
         }
         create("private") {
             dimension = "edition"
             buildConfigField("String", "UPDATE_FEED_URL", "\"\"")
+            buildConfigField("boolean", "IS_PRIVATE_BUILD", "true")
         }
     }
 
@@ -108,6 +116,11 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.security.crypto)
+    // Show Nuri (v0.3.0): bundled on-device ML Kit models — OCR + image
+    // labels. No network use; the cloud fallback is a separate consented seam.
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.image.labeling)
+    implementation(libs.mlkit.barcode.scanning)
     // NOTE: sherpa-onnx AAR (app/libs/, Scout pattern) is added when the TTS
     // engine lands with the gated voice work — see SCAFFOLD.md. Not copied
     // into the scaffold: 56 MB native lib, and the voice build is gated.

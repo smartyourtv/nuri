@@ -60,6 +60,28 @@ class SettingsRepository(private val context: Context) {
         val LAST_NOTIFIED_VERSION = intPreferencesKey("last_notified_version")
         val DISMISSED_VERSION = intPreferencesKey("dismissed_update_version")
         val SINGLE_VOICE_ID = stringPreferencesKey("single_voice_id")
+        // ── v0.3.0 Unstuck / safety additions (additive; vc2 keys untouched) ──
+        val CAREGIVER_NAME = stringPreferencesKey("caregiver_name")
+        val SAFE_WORD = stringPreferencesKey("family_safe_word")
+        val SPOUSE_MODE = stringPreferencesKey("spouse_response_mode")
+        val SPOUSE_SCRIPT = stringPreferencesKey("spouse_family_script")
+        val EMERGENCY_NAME = stringPreferencesKey("emergency_contact_name")
+        val EMERGENCY_NUMBER = stringPreferencesKey("emergency_contact_number")
+        val FAMILY_CONTACTS = stringPreferencesKey("family_contacts")
+        val MED_SCHEDULE = stringPreferencesKey("med_schedule")
+        val MED_CONFIRMATIONS = stringPreferencesKey("med_confirmations")
+        val DIARY = stringPreferencesKey("confusion_diary")
+        val SAFETY_ALERTS = stringPreferencesKey("safety_alerts")
+        val CHECK_INS = stringPreferencesKey("check_ins")
+        val ANCHORS = stringPreferencesKey("routine_anchors")
+        val NOTES = stringPreferencesKey("note_records")
+        val SETUP_COMPLETED = booleanPreferencesKey("setup_completed")
+        val SEALED_PAPER_DONE = booleanPreferencesKey("sealed_paper_done")
+        val RECOVERY_CHAIN_DONE = booleanPreferencesKey("recovery_chain_done")
+        val EMERGENCY_INFO = stringPreferencesKey("emergency_info_text")
+        val EMERGENCY_INFO_ON = booleanPreferencesKey("emergency_info_on")
+        val LAST_INTERACTION_MS = androidx.datastore.preferences.core.longPreferencesKey("last_interaction_ms")
+        val USUAL_PLACES = stringPreferencesKey("usual_places")
     }
 
     private fun <T : Enum<T>> enumFlow(key: androidx.datastore.preferences.core.Preferences.Key<String>, default: T, values: Array<T>): Flow<T> =
@@ -126,4 +148,100 @@ class SettingsRepository(private val context: Context) {
     /** The ONE voice (voice continuity). Set once; updates never change it. */
     val singleVoiceId: Flow<String> = context.dataStore.data.map { it[Keys.SINGLE_VOICE_ID] ?: "nuri-voice-default" }
     suspend fun setSingleVoiceId(id: String) { context.dataStore.edit { it[Keys.SINGLE_VOICE_ID] = id } }
+
+    // ── v0.3.0: Unstuck setup + records ──────────────────────────────
+    val caregiverName: Flow<String> = context.dataStore.data.map { it[Keys.CAREGIVER_NAME] ?: "" }
+    suspend fun setCaregiverName(v: String) { context.dataStore.edit { it[Keys.CAREGIVER_NAME] = v } }
+
+    /** The family safe word — stored locally, never logged, never written to the diary. */
+    val safeWord: Flow<String> = context.dataStore.data.map { it[Keys.SAFE_WORD] ?: "" }
+    suspend fun setSafeWord(v: String) { context.dataStore.edit { it[Keys.SAFE_WORD] = v } }
+
+    val spouseMode: Flow<com.app.nuri.unstuck.SpouseResponseMode> =
+        enumFlow(Keys.SPOUSE_MODE, com.app.nuri.unstuck.SpouseResponseMode.UNSET, com.app.nuri.unstuck.SpouseResponseMode.values())
+    suspend fun setSpouseMode(v: com.app.nuri.unstuck.SpouseResponseMode) { context.dataStore.edit { it[Keys.SPOUSE_MODE] = v.name } }
+
+    val spouseScript: Flow<String> = context.dataStore.data.map { it[Keys.SPOUSE_SCRIPT] ?: "" }
+    suspend fun setSpouseScript(v: String) { context.dataStore.edit { it[Keys.SPOUSE_SCRIPT] = v } }
+
+    val emergencyContactName: Flow<String> = context.dataStore.data.map { it[Keys.EMERGENCY_NAME] ?: "" }
+    suspend fun setEmergencyContactName(v: String) { context.dataStore.edit { it[Keys.EMERGENCY_NAME] = v } }
+    val emergencyContactNumber: Flow<String> = context.dataStore.data.map { it[Keys.EMERGENCY_NUMBER] ?: "" }
+    suspend fun setEmergencyContactNumber(v: String) { context.dataStore.edit { it[Keys.EMERGENCY_NUMBER] = v } }
+
+    val familyContacts: Flow<List<com.app.nuri.unstuck.FamilyContact>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.FamilyContacts.decode(it[Keys.FAMILY_CONTACTS] ?: "") }
+    suspend fun setFamilyContacts(v: List<com.app.nuri.unstuck.FamilyContact>) { context.dataStore.edit { it[Keys.FAMILY_CONTACTS] = com.app.nuri.unstuck.FamilyContacts.encode(v) } }
+
+    val medSchedule: Flow<List<com.app.nuri.unstuck.MedScheduleEntry>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.MedRecords.decodeSchedule(it[Keys.MED_SCHEDULE] ?: "") }
+    suspend fun setMedSchedule(v: List<com.app.nuri.unstuck.MedScheduleEntry>) { context.dataStore.edit { it[Keys.MED_SCHEDULE] = com.app.nuri.unstuck.MedRecords.encodeSchedule(v) } }
+
+    val medConfirmations: Flow<List<com.app.nuri.unstuck.MedConfirmation>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.MedRecords.decodeConfirmations(it[Keys.MED_CONFIRMATIONS] ?: "") }
+    suspend fun addMedConfirmation(c: com.app.nuri.unstuck.MedConfirmation) {
+        context.dataStore.edit { p ->
+            val cur = com.app.nuri.unstuck.MedRecords.decodeConfirmations(p[Keys.MED_CONFIRMATIONS] ?: "")
+            p[Keys.MED_CONFIRMATIONS] = com.app.nuri.unstuck.MedRecords.encodeConfirmations((cur + c).takeLast(400))
+        }
+    }
+
+    val diary: Flow<List<com.app.nuri.unstuck.DiaryEntry>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.ConfusionDiary.decode(it[Keys.DIARY] ?: "") }
+    suspend fun addDiaryEntry(e: com.app.nuri.unstuck.DiaryEntry) {
+        context.dataStore.edit { p ->
+            val cur = com.app.nuri.unstuck.ConfusionDiary.decode(p[Keys.DIARY] ?: "")
+            p[Keys.DIARY] = com.app.nuri.unstuck.ConfusionDiary.encode(com.app.nuri.unstuck.ConfusionDiary.capped(cur + e))
+        }
+    }
+
+    val safetyAlerts: Flow<List<com.app.nuri.unstuck.SafetyAlert>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.SafetyAlerts.decode(it[Keys.SAFETY_ALERTS] ?: "") }
+    suspend fun addSafetyAlert(a: com.app.nuri.unstuck.SafetyAlert) {
+        context.dataStore.edit { p ->
+            val cur = com.app.nuri.unstuck.SafetyAlerts.decode(p[Keys.SAFETY_ALERTS] ?: "")
+            p[Keys.SAFETY_ALERTS] = com.app.nuri.unstuck.SafetyAlerts.encode(com.app.nuri.unstuck.SafetyAlerts.capped(cur + a))
+        }
+    }
+
+    val checkIns: Flow<List<com.app.nuri.unstuck.CheckInRecord>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.CheckIns.decode(it[Keys.CHECK_INS] ?: "") }
+    suspend fun addCheckIn(r: com.app.nuri.unstuck.CheckInRecord) {
+        context.dataStore.edit { p ->
+            val cur = com.app.nuri.unstuck.CheckIns.decode(p[Keys.CHECK_INS] ?: "")
+            p[Keys.CHECK_INS] = com.app.nuri.unstuck.CheckIns.encode((cur + r).takeLast(90))
+        }
+    }
+
+    val anchors: Flow<List<com.app.nuri.unstuck.RoutineAnchor>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.RoutineAnchors.decode(it[Keys.ANCHORS] ?: "") }
+    suspend fun setAnchors(v: List<com.app.nuri.unstuck.RoutineAnchor>) { context.dataStore.edit { it[Keys.ANCHORS] = com.app.nuri.unstuck.RoutineAnchors.encode(v) } }
+
+    val notes: Flow<List<com.app.nuri.unstuck.NoteRecord>> =
+        context.dataStore.data.map { com.app.nuri.unstuck.NoteRecords.decode(it[Keys.NOTES] ?: "") }
+    suspend fun addNote(r: com.app.nuri.unstuck.NoteRecord) {
+        context.dataStore.edit { p ->
+            val cur = com.app.nuri.unstuck.NoteRecords.decode(p[Keys.NOTES] ?: "")
+            p[Keys.NOTES] = com.app.nuri.unstuck.NoteRecords.encode((cur + r).takeLast(200))
+        }
+    }
+
+    val setupCompleted: Flow<Boolean> = context.dataStore.data.map { it[Keys.SETUP_COMPLETED] ?: false }
+    suspend fun setSetupCompleted(v: Boolean) { context.dataStore.edit { it[Keys.SETUP_COMPLETED] = v } }
+    val sealedPaperDone: Flow<Boolean> = context.dataStore.data.map { it[Keys.SEALED_PAPER_DONE] ?: false }
+    suspend fun setSealedPaperDone(v: Boolean) { context.dataStore.edit { it[Keys.SEALED_PAPER_DONE] = v } }
+    val recoveryChainDone: Flow<Boolean> = context.dataStore.data.map { it[Keys.RECOVERY_CHAIN_DONE] ?: false }
+    suspend fun setRecoveryChainDone(v: Boolean) { context.dataStore.edit { it[Keys.RECOVERY_CHAIN_DONE] = v } }
+
+    val emergencyInfo: Flow<String> = context.dataStore.data.map { it[Keys.EMERGENCY_INFO] ?: "" }
+    suspend fun setEmergencyInfo(v: String) { context.dataStore.edit { it[Keys.EMERGENCY_INFO] = v } }
+    val emergencyInfoOn: Flow<Boolean> = context.dataStore.data.map { it[Keys.EMERGENCY_INFO_ON] ?: false }
+    suspend fun setEmergencyInfoOn(v: Boolean) { context.dataStore.edit { it[Keys.EMERGENCY_INFO_ON] = v } }
+
+    val lastInteractionMs: Flow<Long> = context.dataStore.data.map { it[Keys.LAST_INTERACTION_MS] ?: 0L }
+    suspend fun touchInteraction(nowMs: Long) { context.dataStore.edit { it[Keys.LAST_INTERACTION_MS] = nowMs } }
+
+    /** "Usual places" for lost things (catalog #14): one place per line, "glasses — kitchen counter". */
+    val usualPlaces: Flow<String> = context.dataStore.data.map { it[Keys.USUAL_PLACES] ?: "" }
+    suspend fun setUsualPlaces(v: String) { context.dataStore.edit { it[Keys.USUAL_PLACES] = v } }
 }
