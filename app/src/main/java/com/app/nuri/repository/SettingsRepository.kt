@@ -1,19 +1,37 @@
 package com.app.nuri.repository
 
 import android.content.Context
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.app.nuri.bluetooth.BtSlotManager
 import com.app.nuri.config.NuriSettings
+import com.app.nuri.repair.SettingsCorruption
+import com.app.nuri.reports.android.CrashReports
 import com.app.nuri.tier.PersonToggles
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore by preferencesDataStore(name = "nuri_settings")
+/**
+ * Self-repair (standing rule, 2026-10-17): if the settings file is ever
+ * damaged, DataStore calls this handler instead of crashing every read
+ * forever. It preserves a copy of the damaged file inside the app,
+ * records the event, and substitutes safe defaults; the startup repair
+ * runner then verifies the store reads again and logs the repair
+ * (repaired / repair-failed) in the crash & error reports.
+ */
+private val Context.dataStore by preferencesDataStore(
+    name = "nuri_settings",
+    corruptionHandler = ReplaceFileCorruptionHandler {
+        SettingsCorruption.onCorruption(CrashReports.contextOrNull()?.filesDir, it)
+        emptyPreferences()
+    }
+)
 
 /**
  * Settings storage — DataStore-backed, enum values stored by name (Scout
