@@ -33,15 +33,20 @@ import com.app.nuri.ui.theme.NuriTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Startup breadcrumbs (crash-report rule, 2026-10-17): if Nuri
+        // dies during startup, the report shows exactly how far it got.
+        com.app.nuri.reports.android.CrashReports.breadcrumbs.mark("main screen starting")
         // Self-update (brief §10): if an update was installed since the last
         // start, resolve it now — self-test, quiet after-note, or caregiver
         // alert. Runs on a background thread; never blocks the first frame.
         com.app.nuri.update.android.PostUpdateCheck.runAsync(this)
+        com.app.nuri.reports.android.CrashReports.breadcrumbs.mark("post-update check started")
         setContent {
             NuriTheme {
                 NuriShell()
             }
         }
+        com.app.nuri.reports.android.CrashReports.breadcrumbs.mark("main screen shown")
     }
 }
 
