@@ -47,6 +47,13 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
+    // Crash & error reports (standing rule, 2026-10-17): a sub-screen swap
+    // inside Settings — the bottom-navigation shape does not change.
+    var showReports by remember { mutableStateOf(false) }
+    if (showReports) {
+        com.app.nuri.reports.CrashReportsScreen(onBack = { showReports = false }, modifier = modifier)
+        return
+    }
     val context = LocalContext.current
     val repo = remember(context) { SettingsRepository(context.applicationContext) }
     val scope = rememberCoroutineScope()
@@ -158,6 +165,16 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             Button(onClick = { scope.launch { repo.setFontStep(step) } }, modifier = Modifier.fillMaxWidth()) {
                 Text(if (step == fontStep) "${step.label} — using this one" else step.label)
             }
+        }
+        // Crash & error reports (standing rule, 2026-10-17): if something
+        // goes wrong, Nuri saves a report in the app and as a file in the
+        // Downloads folder; repairs Nuri makes to its own saved
+        // information are recorded there too. Reports never leave this
+        // phone unless the person using Nuri shares one.
+        Text("Crash & error reports", style = MaterialTheme.typography.titleLarge)
+        Text("If something goes wrong, Nuri saves a report here and in the Downloads folder. Reports never leave this phone unless you share one.")
+        Button(onClick = { showReports = true }, modifier = Modifier.fillMaxWidth()) {
+            Text("See crash & error reports")
         }
     }
 }
