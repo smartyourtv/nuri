@@ -1,0 +1,19 @@
+Additional permission under GNU GPL version 3, section 7
+
+As a special exception, the copyright holder of Nuri gives you
+permission to link, combine, and distribute Nuri with the Google
+ML Kit libraries (including the ML Kit client libraries, bundled
+models, and native pipelines) and the Google Play services client
+libraries, which are provided under Google's own terms (including
+the ML Kit Terms of Service and the Google APIs Terms of
+Service), and to convey the resulting combined work.
+
+This permission applies only to those Google libraries, in the
+form distributed by Google. It does not change the license of
+Nuri's own code, which remains GNU GPL version 3 or (at your
+option) any later version, and it does not make the Google
+libraries free software — they remain under Google's terms.
+
+If you modify Nuri, you may extend this exception to your version
+of Nuri, but you are not obliged to do so. If you do not wish to
+do so, delete this exception statement from your version.

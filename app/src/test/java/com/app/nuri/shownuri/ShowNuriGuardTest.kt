@@ -54,13 +54,18 @@ class ShowNuriGuardTest {
     }
 
     @Test fun identificationStatesConfidence() {
+        // v0.3.2 contract (label suppression): an object label is only
+        // ever STATED at high confidence. Below it, Nuri says she
+        // can't tell yet — she never hedges a guess aloud.
         val sure = ReadAloudComposer.identifyLine(listOf(VisionLabel("Television remote", 0.95f)), "Maria")
         assertTrue(sure.contains("looks like"))
+        val mid = ReadAloudComposer.identifyLine(listOf(VisionLabel("Plant", 0.6f)), "Maria")
+        assertTrue(mid.contains("can't tell"))
+        assertTrue(mid.contains("Maria"))
         val unsure = ReadAloudComposer.identifyLine(listOf(VisionLabel("Plant", 0.3f)), "Maria")
-        assertTrue(unsure.contains("won't guess"))
-        assertTrue(unsure.contains("Maria"))
+        assertTrue(unsure.contains("can't tell"))
         val none = ReadAloudComposer.identifyLine(emptyList(), "Maria")
-        assertTrue(none.contains("can't see that clearly"))
+        assertTrue(none.contains("can't tell"))
     }
 
     @Test fun qrPreviewReadsDestinationAndStopsPayments() {

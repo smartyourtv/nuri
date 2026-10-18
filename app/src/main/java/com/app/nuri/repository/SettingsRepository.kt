@@ -82,6 +82,11 @@ class SettingsRepository(private val context: Context) {
         val EMERGENCY_INFO_ON = booleanPreferencesKey("emergency_info_on")
         val LAST_INTERACTION_MS = androidx.datastore.preferences.core.longPreferencesKey("last_interaction_ms")
         val USUAL_PLACES = stringPreferencesKey("usual_places")
+        // ── v0.3.2: Show Nuri read-aloud + cloud vision + safety card ──
+        val SHOW_NURI_READ_ALOUD = booleanPreferencesKey("show_nuri_read_aloud")
+        val CLOUD_VISION_KEY = stringPreferencesKey("cloud_vision_key")
+        val CLOUD_HINT_PENDING = booleanPreferencesKey("cloud_hint_pending")
+        val SAFETY_CARD_SEEN = booleanPreferencesKey("safety_card_seen")
     }
 
     private fun <T : Enum<T>> enumFlow(key: androidx.datastore.preferences.core.Preferences.Key<String>, default: T, values: Array<T>): Flow<T> =
@@ -244,4 +249,30 @@ class SettingsRepository(private val context: Context) {
     /** "Usual places" for lost things (catalog #14): one place per line, "glasses — kitchen counter". */
     val usualPlaces: Flow<String> = context.dataStore.data.map { it[Keys.USUAL_PLACES] ?: "" }
     suspend fun setUsualPlaces(v: String) { context.dataStore.edit { it[Keys.USUAL_PLACES] = v } }
+
+    // ── v0.3.2 ──────────────────────────────────────────────────────
+    /**
+     * Show Nuri read-aloud (interim platform voice). Default ON: the
+     * Show Nuri screen promises "I'll read it aloud" — the promise is
+     * only true if this defaults on. The toggle lives in Settings.
+     */
+    val showNuriReadAloud: Flow<Boolean> = context.dataStore.data.map { it[Keys.SHOW_NURI_READ_ALOUD] ?: true }
+    suspend fun setShowNuriReadAloud(v: Boolean) { context.dataStore.edit { it[Keys.SHOW_NURI_READ_ALOUD] = v } }
+
+    /**
+     * The caregiver's OWN free Gemini API key (Part D, bring-your-own
+     * key). Stored only in this app's private DataStore; never logged,
+     * never written to the diary or any report; sent only as the
+     * x-goog-api-key header to Google. Blank = cloud route off.
+     */
+    val cloudVisionKey: Flow<String> = context.dataStore.data.map { it[Keys.CLOUD_VISION_KEY] ?: "" }
+    suspend fun setCloudVisionKey(v: String) { context.dataStore.edit { it[Keys.CLOUD_VISION_KEY] = v.trim() } }
+
+    /** Set when a photo was answered on-device only because no key exists; the caregiver dashboard shows the gentle hint once. */
+    val cloudHintPending: Flow<Boolean> = context.dataStore.data.map { it[Keys.CLOUD_HINT_PENDING] ?: false }
+    suspend fun setCloudHintPending(v: Boolean) { context.dataStore.edit { it[Keys.CLOUD_HINT_PENDING] = v } }
+
+    /** First-install safety card (legal checklist §5): shown once, acknowledgment stored; never blocks anything. */
+    val safetyCardSeen: Flow<Boolean> = context.dataStore.data.map { it[Keys.SAFETY_CARD_SEEN] ?: false }
+    suspend fun setSafetyCardSeen(v: Boolean) { context.dataStore.edit { it[Keys.SAFETY_CARD_SEEN] = v } }
 }

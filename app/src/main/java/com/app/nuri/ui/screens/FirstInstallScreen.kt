@@ -45,6 +45,12 @@ fun FirstInstallScreen(
     modifier: Modifier = Modifier,
     therapistConsentSeen: Boolean = false,
     onTherapistConsentRead: () -> Unit = {},
+    // v0.3.2 (legal checklist §5): the safety card is shown once, at
+    // the very top of first install; the acknowledgment is stored.
+    // It never blocks setup or any emergency feature — the choices
+    // below stay usable whether or not it has been tapped.
+    safetyCardSeen: Boolean = false,
+    onSafetyCardSeen: () -> Unit = {},
     onModeChosen: (NuriSettings.FirstInstallMode, NuriSettings.AccessMode) -> Unit = { _, _ -> },
     // v0.3.0: the family setup captured in the CAREGIVER branch (caregiver
     // name, safe word, deceased-spouse response, emergency contact, and
@@ -57,6 +63,15 @@ fun FirstInstallScreen(
     var feedback by remember { mutableStateOf("") }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Welcome to Nuri", style = MaterialTheme.typography.headlineMedium)
+        if (!safetyCardSeen) {
+            Card {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(SafetyCardText.TITLE, style = MaterialTheme.typography.titleLarge)
+                    Text(SafetyCardText.BODY)
+                    Button(onClick = onSafetyCardSeen, modifier = Modifier.fillMaxWidth()) { Text(SafetyCardText.BUTTON) }
+                }
+            }
+        }
         Text("Who is setting up this phone? Choose the one that fits. You can read each one first — nothing starts until you confirm.")
         Button(onClick = { mode = NuriSettings.FirstInstallMode.INDEPENDENT }, modifier = Modifier.fillMaxWidth()) { Text("Just me — I am setting up my own Nuri") }
         Text("'Just me' is already the usual choice. No caregiver, no sharing, nothing leaves this phone.")
@@ -86,7 +101,7 @@ fun FirstInstallScreen(
                 Text("A word only your family knows. On any 'emergency' call claiming to be family, Nuri asks whether the caller knew it — voice-copying scammers won't.")
                 Text("If they ask for a husband or wife who has passed, how should Nuri answer? The family chooses; Nuri never improvises.")
                 com.app.nuri.unstuck.SpouseResponseMode.values().forEach { m ->
-                    Button(onClick = { cgSpouse = m }, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = { cgSpouse = com.app.nuri.unstuck.SpouseResponse.toggle(cgSpouse, m) }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (m == cgSpouse) "${m.name.replace('_', ' ')} — chosen" else m.name.replace('_', ' '))
                     }
                     Text(com.app.nuri.unstuck.SpouseResponse.setupExplanation(m))

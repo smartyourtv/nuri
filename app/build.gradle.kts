@@ -14,8 +14,8 @@ android {
         // Deliberately targets old phones; interface freeze starts here.
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.3.1"
+        versionCode = 5
+        versionName = "0.3.2"
 
         // Phones only: the floor device is a Galaxy S10-class ARM phone.
         // Without this, ML Kit's bundled models ship native libraries for
@@ -101,6 +101,14 @@ android {
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }
+
+    // Legal assets (v0.3.2, notices-wiring checklist §2/§5):
+    // src/main/assets/THIRD-PARTY-NOTICES must stay a verbatim copy of
+    // the master at goals/senior-ai-companion-app/briefs/THIRD-PARTY-NOTICES,
+    // and src/main/assets/TERMS.md a copy of the repo-root TERMS.md.
+    // Re-copy both whenever a master changes — the in-app Licenses and
+    // Terms screens read the assets, and Apache-2.0 §4 requires the
+    // notices text to travel inside the distributed APK.
 }
 
 dependencies {

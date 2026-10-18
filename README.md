@@ -1,12 +1,23 @@
 # Nuri (working tree)
 
-Voice-first AI companion for seniors — personal/family project, not for sale.
+Voice-first AI companion for seniors — personal/family project, given
+away free (never sold).
 
 - **Brief:** `../files/nuri-project-brief.md` (consolidated, updated 2026-10-16)
 - **Scaffold notes:** `SCAFFOLD.md`
 - **License:** GPL-3.0-or-later for distributed builds (per `../briefs/license-audit.md`
   — espeak-ng copyleft via the voice engine); ViFork's MIT applies to the upstream
-  skeleton. Repo roots carry `LICENSE` + `THIRD-PARTY-NOTICES`.
+  skeleton. Repo roots carry `LICENSE` + `THIRD-PARTY-NOTICES`. A linking
+  exception covers the Google ML Kit and Play services libraries inside
+  the app — see [`LINKING-EXCEPTION`](LINKING-EXCEPTION). Terms of use:
+  [`TERMS.md`](TERMS.md). Privacy policy:
+  https://smartyourtv.github.io/nuri/privacy-policy
+
+> Nuri is a free helper app — not a medical device. It never calls
+> 911 by itself; in an emergency, call 911. Medicine reminders are
+> memory aids based on a schedule you enter, not medical advice.
+> Safety features are aids that can miss things — please don't rely
+> on Nuri alone for anyone's safety.
 
 Status: **features built 2026-10-16** (Phase D + bug hunt): tiers, first-install
 modes, caregiver dashboard, backup/restore, Bluetooth memory, game, readability

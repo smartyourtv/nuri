@@ -1,9 +1,13 @@
 package com.app.nuri.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -70,6 +74,8 @@ fun FamilyHelpSetupSection() {
     val usualPlaces by repo.usualPlaces.collectAsState(initial = "")
     val diary by repo.diary.collectAsState(initial = emptyList())
     val tier by repo.tier.collectAsState(initial = NuriSettings.DEFAULT_TIER)
+    val cloudVisionKey by repo.cloudVisionKey.collectAsState(initial = "")
+    val cloudHintPending by repo.cloudHintPending.collectAsState(initial = false)
     var note by remember { mutableStateOf("") }
 
     Text("Family & help setup", style = MaterialTheme.typography.titleLarge)
@@ -93,7 +99,13 @@ fun FamilyHelpSetupSection() {
     Text("When they ask for a husband or wife who has passed", style = MaterialTheme.typography.titleLarge)
     Text("The family chooses this. Nuri never improvises facts about them, and there is no made-up default.")
     SpouseResponseMode.values().forEach { m ->
-        Button(onClick = { scope.launch { repo.setSpouseMode(m) } }, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = {
+            // Tap again to deselect (v0.3.2 Part E): tapping the chosen
+            // mode clears back to UNSET, persisted like any selection.
+            val next = SpouseResponse.toggle(spouseMode, m)
+            scope.launch { repo.setSpouseMode(next) }
+            note = if (next == SpouseResponseMode.UNSET) "Cleared — no way of answering is chosen now. Nuri will comfort and offer to ask, and never improvise." else "Saved how Nuri answers."
+        }, modifier = Modifier.fillMaxWidth()) {
             Text(if (m == spouseMode) "${m.name.replace('_', ' ')} — chosen" else m.name.replace('_', ' '))
         }
         Text(SpouseResponse.setupExplanation(m))
@@ -204,8 +216,26 @@ fun FamilyHelpSetupSection() {
     // v0.3.1 (discoverability: they were buried at the end of this long
     // section). The buttons live in SettingsScreen now; the views are
     // shared from this file (DiaryView / LicensesView below).
+    // A closer look online (v0.3.2 Part D — caregiver's OWN free key;
+    // bring-your-own-key: no key exists in the app itself, ever).
+    Text("A closer look online (optional, for the caregiver)", style = MaterialTheme.typography.titleLarge)
+    Text("Show Nuri reads and identifies on this phone. The phone's own eyes are limited — it is good at reading words, less good at naming things. If you add a free Google Gemini key, photos the person asks about get a closer look online, and Nuri can name many more things.")
+    Text("Photos you ask Nuri to identify are sent to Google for a closer look. Nothing is sent until you add a key.")
+    if (cloudHintPending && cloudVisionKey.isBlank()) {
+        Text("A photo recently could only be answered on this phone. Adding the free key would let Nuri see it much more clearly.", style = MaterialTheme.typography.titleMedium)
+    }
+    var keyField by remember { mutableStateOf("") }
+    OutlinedTextField(value = keyField, onValueChange = { keyField = it }, label = { Text("Google Gemini key (free, from Google AI Studio)") },
+        visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+    Text(if (cloudVisionKey.isBlank()) "No key is set — Show Nuri answers on this phone only. The key is free: search 'Google AI Studio' in a browser, sign in, choose 'Get API key', and paste it here. It is stored only on this phone and is never shown in full again."
+    else "A key is set. Show Nuri will use the closer look online when there is a connection, and answer on this phone when there isn't.")
+    Button(onClick = { if (keyField.isNotBlank()) { scope.launch { repo.setCloudVisionKey(keyField) }; keyField = ""; note = "Key saved on this phone." } }, modifier = Modifier.fillMaxWidth()) { Text("Save the key") }
+    if (cloudVisionKey.isNotBlank()) {
+        OutlinedButton(onClick = { scope.launch { repo.setCloudVisionKey("") }; note = "Key removed. Show Nuri answers on this phone only." }, modifier = Modifier.fillMaxWidth()) { Text("Remove the key") }
+    }
+
     if (note.isNotEmpty()) Text(note, style = MaterialTheme.typography.titleMedium)
-    Text("Vision: Show Nuri reads and identifies on this phone (ML Kit). No cloud vision service is connected in this build — if a photo can't be read, Nuri says so and offers to ask ${FlavorHooks.askNameOverride() ?: "the caregiver"} with the photo.")
+    Text("Vision: Show Nuri reads and identifies on this phone (ML Kit). With a caregiver's key added above, photos can also get a closer look online (Google Gemini). If a photo can't be read either way, Nuri says so and offers to ask ${FlavorHooks.askNameOverride() ?: "the caregiver"} with the photo.")
 }
 
 @Composable
@@ -227,18 +257,40 @@ fun DiaryView(repo: SettingsRepository, onBack: () -> Unit) {
 
 @Composable
 fun LicensesView(onBack: () -> Unit) {
+    val context = LocalContext.current
+    var showFullNotices by remember { mutableStateOf(false) }
+    if (showFullNotices) {
+        // The full notices file travels inside the app (assets) so the
+        // binary distribution carries the texts Apache-2.0 §4 requires
+        // (legal checklist §2).
+        val noticesText = remember(context) {
+            runCatching { context.assets.open("THIRD-PARTY-NOTICES").bufferedReader().use { it.readText() } }
+                .getOrDefault("The notices file could not be opened on this phone. The same file, THIRD-PARTY-NOTICES, is in both source repositories.")
+        }
+        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Third-party notices (full text)", style = MaterialTheme.typography.headlineMedium)
+            OutlinedButton(onClick = { showFullNotices = false }, modifier = Modifier.fillMaxWidth()) { Text("Back to Licenses") }
+            Box(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
+                Text(noticesText, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        return
+    }
     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Licenses & attributions", style = MaterialTheme.typography.headlineMedium)
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
-        Text("Nuri's own source code is licensed GPL-3.0-or-later. The full license text ships with the source in both project repositories.")
+        Text("Nuri's own source code is licensed GPL-3.0-or-later, with an additional permission (a \"linking exception\") covering the Google libraries inside the app. The full license, the exception, and all third-party notices ship with the source in both project repositories, and the full notices are included in this app under \"Read the full notices\" below.")
         Text("Built with", style = MaterialTheme.typography.titleLarge)
-        Text("• ML Kit text recognition, image labeling, and barcode scanning (Google) — Apache License 2.0. Models run on this phone.")
+        Text("• ML Kit client libraries (Google) — Apache License 2.0.")
+        Text("• The ML Kit models and scanning pipelines built into this app (Google) are Google software, not open source. They are provided under the ML Kit Terms of Service (https://developers.google.com/ml-kit/terms). They read and identify only on this phone — your photos are not sent to Google. ML Kit does send Google small technical reports about its own performance; see the Privacy Policy.")
+        Text("• Google Play services libraries, Firebase components, Google Data Transport, odml:image, and Tink (Google) — proprietary Google terms for the Play services libraries; Apache License 2.0 for the rest. Full details: THIRD-PARTY-NOTICES, Part H.")
         Text("• AndroidX, Jetpack Compose, DataStore (Google) — Apache License 2.0.")
         Text("• Kotlin and kotlinx libraries (JetBrains) — Apache License 2.0.")
         Text("Voice models (when the voice engine is connected)", style = MaterialTheme.typography.titleLarge)
         Text("• Voice model by hexgrad (Kokoro-82M), licensed under Apache 2.0. Includes espeak-ng phonemizer data (GPL-3.0-or-later).")
         Text("• Speech-recognition model by NVIDIA (Parakeet TDT 0.6B v2), used under CC-BY-4.0.")
         Text("• Voice model by Supertone Inc. (Supertonic), licensed under OpenRAIL-M (responsible-AI use restrictions apply — no impersonation or deceptive use).")
-        Text("Those three voice models are NOT in this build yet — they're listed now so the credits are never an afterthought. Full license texts: see THIRD-PARTY-NOTICES in the source repositories.")
+        Text("Those three voice models are NOT in this build yet — they're listed now so the credits are never an afterthought.")
+        Button(onClick = { showFullNotices = true }, modifier = Modifier.fillMaxWidth()) { Text("Read the full notices") }
     }
 }

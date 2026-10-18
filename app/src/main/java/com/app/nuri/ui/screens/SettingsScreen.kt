@@ -60,6 +60,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     var showDashboard by remember { mutableStateOf(false) }
     var showDiary by remember { mutableStateOf(false) }
     var showLicenses by remember { mutableStateOf(false) }
+    var showTerms by remember { mutableStateOf(false) }
+    if (showTerms) {
+        TermsView(onBack = { showTerms = false }, modifier = modifier)
+        return
+    }
     val context = LocalContext.current
     val repo = remember(context) { SettingsRepository(context.applicationContext) }
     if (showLicenses) {
@@ -77,6 +82,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         val dashMeds by repo.medConfirmations.collectAsState(initial = emptyList())
         val dashAlerts by repo.safetyAlerts.collectAsState(initial = emptyList())
         val dashDiary by repo.diary.collectAsState(initial = emptyList())
+        val dashCloudKey by repo.cloudVisionKey.collectAsState(initial = "")
+        val dashCloudHint by repo.cloudHintPending.collectAsState(initial = false)
         Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             androidx.compose.material3.OutlinedButton(onClick = { showDashboard = false }, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings", style = MaterialTheme.typography.labelLarge) }
             CaregiverDashboardScreen(
@@ -84,6 +91,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 medConfirmations = dashMeds, safetyAlerts = dashAlerts, diary = dashDiary,
                 todayKey = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()),
                 settingsRepository = repo,
+                cloudHintPending = dashCloudHint && dashCloudKey.isBlank(),
             )
         }
         return
@@ -108,6 +116,16 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Button(onClick = { showDiary = true }, modifier = Modifier.fillMaxWidth()) { Text("See the help diary (what Nuri helped with)", style = MaterialTheme.typography.labelLarge) }
         Button(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) { Text("Licenses & attributions", style = MaterialTheme.typography.labelLarge) }
         Text("Family names, the safe word, medicines, and snapshots are set up in the 'Family & help setup' section further down this screen.")
+        // Show Nuri read-aloud (v0.3.2): the interim platform voice.
+        // Default ON in the store — the Show Nuri promise depends on it.
+        val readAloud by repo.showNuriReadAloud.collectAsState(initial = true)
+        Text("Reading aloud", style = MaterialTheme.typography.titleLarge)
+        Text("When Show Nuri looks at a photo, it reads its answer aloud in the phone's built-in voice, so it can be heard as well as read. Turn this off for quiet answers — the 'Listen again' button on the Show Nuri screen still works either way.")
+        Switch(
+            checked = readAloud,
+            onCheckedChange = { checked -> scope.launch { repo.setShowNuriReadAloud(checked) } }
+        )
+        Text(if (readAloud) "Reading aloud is on." else "Reading aloud is off. Answers will appear as words on the screen.")
         Text("How much feeling Nuri shows", style = MaterialTheme.typography.titleLarge)
         Text("This changes how warm and lively Nuri sounds. It never changes Nuri's voice — it is always the same voice.")
         Box {
@@ -214,9 +232,45 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Button(onClick = { showReports = true }, modifier = Modifier.fillMaxWidth()) {
             Text("See crash & error reports")
         }
+        // About Nuri (v0.3.2, legal checklist §5): the permanent safety
+        // card + terms + privacy policy. Permanent means permanent —
+        // nothing here can be removed or dismissed away.
+        Text("About Nuri", style = MaterialTheme.typography.titleLarge)
+        androidx.compose.material3.Card {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(SafetyInfoText.TITLE, style = MaterialTheme.typography.titleMedium)
+                Text(SafetyInfoText.BODY)
+            }
+        }
+        Button(onClick = { showTerms = true }, modifier = Modifier.fillMaxWidth()) {
+            Text("Terms of use")
+        }
+        Button(onClick = {
+            runCatching {
+                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(SafetyInfoText.PRIVACY_URL)))
+            }
+        }, modifier = Modifier.fillMaxWidth()) {
+            Text("Privacy policy")
+        }
+        Text("The privacy policy opens on the web. It explains, in plain words, what Nuri keeps on this phone and the one thing that can leave it — a photo you ask Nuri to identify, and only when a caregiver has added the free closer-look key.")
         // v0.3.0 additions (Unstuck family setup, medicine schedule, setup
         // checklists, snapshots, diary, licenses) — appended section; the
         // cards above are unchanged (interface freeze).
         FamilyHelpSetupSection()
+    }
+}
+
+/** The full Terms of Use, bundled in the app (assets/TERMS.md) so it travels with the binary. */
+@Composable
+fun TermsView(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val termsText = remember(context) {
+        runCatching { context.assets.open("TERMS.md").bufferedReader().use { it.readText() } }
+            .getOrDefault("The terms could not be opened on this phone. The same text, TERMS.md, is in both source repositories.")
+    }
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Terms of use", style = MaterialTheme.typography.headlineMedium)
+        androidx.compose.material3.OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
+        Text(termsText, style = MaterialTheme.typography.bodyMedium)
     }
 }

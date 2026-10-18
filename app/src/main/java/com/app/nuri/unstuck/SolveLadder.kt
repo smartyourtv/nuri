@@ -61,6 +61,18 @@ data class SpouseResponsePlan(
 )
 
 object SpouseResponse {
+    /**
+     * Tap-again-to-deselect (v0.3.2, Part E — Shawn, 2026-10-18):
+     * tapping the currently chosen mode again clears the choice back
+     * to UNSET — the family hasn't chosen, exactly as before any
+     * choice was made, and Nuri keeps using the UNSET comfort plan.
+     * Applies to every spouse-response picker (first install +
+     * Settings). Selectors that must always hold a value (access
+     * mode, font step, theme) do NOT use this — they keep their value.
+     */
+    fun toggle(current: SpouseResponseMode, tapped: SpouseResponseMode): SpouseResponseMode =
+        if (tapped == current) SpouseResponseMode.UNSET else tapped
+
     fun plan(
         mode: SpouseResponseMode,
         familyScript: String?,

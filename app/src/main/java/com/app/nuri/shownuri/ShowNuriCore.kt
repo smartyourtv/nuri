@@ -123,17 +123,82 @@ object ReadAloudComposer {
     const val CONFIDENT: Float = 0.75f
     const val UNSURE: Float = 0.5f
 
-    fun identifyLine(labels: List<VisionLabel>, askTarget: String): String {
-        val top = labels.maxByOrNull { it.confidence } ?: return unsureLine(askTarget)
-        return when {
-            top.confidence >= CONFIDENT -> "That looks like ${article(top.text)} ${top.text.lowercase()}."
-            top.confidence >= UNSURE -> "It looks like it might be ${article(top.text)} ${top.text.lowercase()}, but I'm not certain."
-            else -> unsureLine(askTarget)
+    /**
+     * Scene/category labels (v0.3.2 — Shawn's remote test, 2026-10-18).
+     * ML Kit's labeler happily returns scene categories — "Space",
+     * "Room", "Building" — for ordinary objects (an LG TV remote was
+     * answered "a space"). A scene word is NOT an object identification
+     * and must never be presented as one, at ANY confidence the
+     * labeler reports. These are filtered out before identification.
+     */
+    val NON_OBJECT_LABELS: Set<String> = setOf(
+        "space", "room", "building", "buildings", "structure", "architecture",
+        "sky", "cloud", "clouds", "landscape", "scenery", "nature",
+        "interior", "exterior", "indoors", "outdoors", "darkness", "light",
+        "shadow", "pattern", "texture", "text", "font", "illustration",
+        "art", "design", "event", "recreation", "leisure", "screenshot",
+        "photograph", "photo", "image", "selfie", "smile", "people",
+        "person", "human", "crowd", "night", "daytime", "sunset", "sunrise",
+    )
+
+    /** Labels that could actually name the OBJECT in the photo. */
+    fun objectLabels(labels: List<VisionLabel>): List<VisionLabel> =
+        labels.filter { it.text.trim().lowercase() !in NON_OBJECT_LABELS }
+
+    /**
+     * Identification from labels — v0.3.2 contract: an object label is
+     * only ever STATED at high confidence. Below that, Nuri says she
+     * can't tell yet and offers a closer photo; she never hedges a
+     * guess aloud ("might be a building" is how trust dies).
+     */
+    fun identifyLine(labels: List<VisionLabel>, askTarget: String): String =
+        confidentObjectLine(labels) ?: cantTellLine(askTarget)
+
+    /** The confident object statement, or null when no object label earns one. */
+    fun confidentObjectLine(labels: List<VisionLabel>): String? {
+        val top = objectLabels(labels).maxByOrNull { it.confidence } ?: return null
+        return if (top.confidence >= CONFIDENT) {
+            "That looks like ${article(top.text)} ${top.text.lowercase()}."
+        } else {
+            null
         }
     }
 
+    fun cantTellLine(askTarget: String): String =
+        "I can't tell what this is yet — a closer photo may help. Or shall I ask $askTarget with this photo?"
+
     fun unsureLine(askTarget: String): String =
         "I can't see that clearly enough to be sure, and I won't guess. Try holding it closer to the light — or shall I ask $askTarget with this photo?"
+
+    /**
+     * Identification from the WORDS in the photo (v0.3.2). When the
+     * labeler offers only scene categories but the photo carries
+     * readable product words, the honest answer is built from that
+     * text evidence — a remote's buttons name it better than any
+     * scene label. Returns null when the words don't name anything
+     * this table knows; callers fall back honestly, never to a scene
+     * word. The table is deliberately small and evidence-based: it
+     * fires only on several strong product words together.
+     */
+    fun identifyFromOcr(ocrText: String): String? {
+        val upper = ocrText.uppercase()
+        val words = upper.split(Regex("[^A-Z0-9]+")).filter { it.isNotBlank() }.toSet()
+        fun anyOf(vararg w: String) = w.any { it in words }
+        fun countOf(vararg w: String) = w.count { it in words }
+        val brands = listOf("LG", "SAMSUNG", "SONY", "VIZIO", "TCL", "PHILIPS", "PANASONIC", "SHARP", "TOSHIBA", "HISENSE", "ROKU", "FIRE TV", "APPLE")
+        val brand = brands.firstOrNull { it in upper }
+        // TV remote: streaming-service buttons and/or VOL+CH clusters.
+        val remoteSignals = countOf("NETFLIX", "HULU", "AMAZON", "VOL", "CH", "GUIDE", "INPUT", "SOURCE", "MUTE", "REC", "EXIT", "BACK")
+        if ((anyOf("NETFLIX", "HULU") && remoteSignals >= 3) || (countOf("VOL", "CH") == 2 && remoteSignals >= 3)) {
+            val brandPart = brand?.let { " It's an $it remote." } ?: ""
+            return "The words on it — the buttons say VOL, CH, and Guide — are the words on a television remote control.$brandPart"
+        }
+        // Microwave oven: cooking-function words together.
+        if (countOf("POPCORN", "DEFROST", "POTATO", "BEVERAGE", "REHEAT", "COOK") >= 2) {
+            return "The words on it are cooking words — popcorn, defrost, cook. This is the front of a microwave oven."
+        }
+        return null
+    }
 
     private fun article(word: String): String =
         if (word.firstOrNull()?.lowercaseChar() in listOf('a', 'e', 'i', 'o', 'u')) "an" else "a"
@@ -174,6 +239,52 @@ object ReadAloudComposer {
         }
         return "The date printed is $dateMatch, and it's $kind. If a 'use by' date has passed, or the seal is broken — when in doubt, throw it out. I read dates; I never declare food safe."
     }
+}
+
+/**
+ * What the interim platform voice actually says (v0.3.2). Pure logic:
+ * the display lines minus the route-attribution parenthetical, packed
+ * into utterances short enough for the platform TTS engine, split on
+ * sentence boundaries so a stop tap never lands mid-thought more than
+ * one sentence deep. The read-aloud toggle lives in Settings; when it
+ * is off, nothing auto-speaks and "Listen again" still works.
+ */
+object SpeechPlan {
+    const val MAX_UTTERANCE_CHARS: Int = 800
+
+    fun utterances(displayLines: List<String>): List<String> {
+        val speakable = displayLines
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("(") }
+        if (speakable.isEmpty()) return emptyList()
+        val sentences = speakable.flatMap { line ->
+            line.split(Regex("(?<=[.!?])\\s+")).map { it.trim() }.filter { it.isNotEmpty() }
+        }
+        val out = mutableListOf<String>()
+        var current = StringBuilder()
+        fun flush() { if (current.isNotEmpty()) { out += current.toString(); current = StringBuilder() } }
+        for (sentence in sentences) {
+            if (sentence.length > MAX_UTTERANCE_CHARS) {
+                flush()
+                var rest = sentence
+                while (rest.length > MAX_UTTERANCE_CHARS) {
+                    val cut = rest.lastIndexOf(' ', MAX_UTTERANCE_CHARS).takeIf { it > 0 } ?: MAX_UTTERANCE_CHARS
+                    out += rest.substring(0, cut).trim()
+                    rest = rest.substring(cut).trim()
+                }
+                if (rest.isNotEmpty()) current = StringBuilder(rest)
+                continue
+            }
+            if (current.length + 1 + sentence.length > MAX_UTTERANCE_CHARS) flush()
+            if (current.isNotEmpty()) current.append(' ')
+            current.append(sentence)
+        }
+        flush()
+        return out
+    }
+
+    fun shouldAutoSpeak(toggleOn: Boolean, displayLines: List<String>): Boolean =
+        toggleOn && utterances(displayLines).isNotEmpty()
 }
 
 /** QR safety (catalog #82): read the destination aloud BEFORE anything is tapped. */

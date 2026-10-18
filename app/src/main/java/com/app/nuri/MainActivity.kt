@@ -117,11 +117,16 @@ private fun NuriRoot() {
         }
     }
 
+    val safetyCardSeen by repo.safetyCardSeen.collectAsState(initial = false)
     when (setupCompleted) {
         null -> Text("Nuri is getting ready…")
         false -> FirstInstallScreen(
             therapistConsentSeen = false,
             onTherapistConsentRead = { },
+            safetyCardSeen = safetyCardSeen,
+            onSafetyCardSeen = {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { repo.setSafetyCardSeen(true) }
+            },
             onModeChosen = { mode, access ->
                 SetupCompletion.complete(repo, mode, access)
             },
