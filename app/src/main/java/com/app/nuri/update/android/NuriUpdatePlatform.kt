@@ -69,6 +69,13 @@ object NuriUpdatePlatform {
 object UpdateScheduler {
     private const val JOB_ID = 4101
 
+    /** Whether the nightly job is currently scheduled (self-repair reconcile reads this). */
+    fun isScheduled(context: Context): Boolean {
+        val scheduler = context.applicationContext
+            .getSystemService(JobScheduler::class.java) ?: return false
+        return scheduler.allPendingJobs.any { it.id == JOB_ID }
+    }
+
     fun schedule(context: Context) {
         val app = context.applicationContext
         val scheduler = app.getSystemService(JobScheduler::class.java) ?: return
@@ -96,10 +103,23 @@ object PostUpdateCheck {
                 val result = NuriUpdatePlatform.createExecutor(app).checkAfterLaunch()
                 if (result != null) {
                     NuriUpdatePlatform.runtimeStore(app).recordRunResult(result.detail)
+                    // Self-repair rule (2026-10-17): a failed post-update
+                    // self-check is a repair failure — the caregiver alert
+                    // above stands, and the evidence also lands in the
+                    // crash/error report store.
+                    if (result.outcome == com.app.nuri.update.PostUpdateOutcome.UPDATED_SELF_TEST_FAILED) {
+                        com.app.nuri.reports.android.CrashReports.recordRepair(
+                            what = "Update self-check",
+                            evidence = result.detail,
+                            status = com.app.nuri.reports.RepairStatus.REPAIR_FAILED
+                        )
+                    }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // A failed post-update check must never block app start; the
-                // pending marker survives and the next start retries.
+                // pending marker survives and the next start retries. The
+                // failure is recorded as an error report (2026-10-17 rule).
+                com.app.nuri.reports.android.CrashReports.recordError("Post-update check", e)
             }
         }.start()
     }
