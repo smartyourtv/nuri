@@ -66,7 +66,12 @@ class LocalEncryptedBackupManager(private val filesDir: File) : BackupManager {
         return try {
             val f = File(filesDir, "nuri-backup.nuri"); f.writeText(BackupCrypto.encrypt(payload.toByteArray(Charsets.UTF_8), passphrase))
             BackupResult(true, "Saved encrypted backup to ${f.name} (${f.length()} bytes).")
-        } catch (e: Exception) { BackupResult(false, "Export failed: ${e.message}") }
+        } catch (e: Exception) {
+            // Crash/error report rule (2026-10-17): caught exceptions in
+            // risky paths are recorded, not just turned into a message.
+            com.app.nuri.reports.android.CrashReports.recordError("Backup export", e)
+            BackupResult(false, "Export failed: ${e.message}")
+        }
     }
     fun importFromFile(passphrase: String): BackupResult {
         val f = File(filesDir, "nuri-backup.nuri")
@@ -76,6 +81,15 @@ class LocalEncryptedBackupManager(private val filesDir: File) : BackupManager {
             val text = String(plain, Charsets.UTF_8)
             if (!text.startsWith("NURI-PAYLOAD-V1")) BackupResult(false, "Backup restored but its contents are not recognised — nothing was changed.")
             else BackupResult(true, "Backup file opened and checked OK (${text.length} characters). Applying settings is a caregiver step that lands with the real data store. TODO(real-data-store)")
-        } catch (e: Exception) { BackupResult(false, "Could not open that backup. The passphrase may be wrong, or the file is damaged. Nothing was changed.") }
+        } catch (e: Exception) {
+            // A GCM tag failure is the DESIGNED rejection of a wrong
+            // passphrase (already honestly reported to the user just
+            // below) — recording it as an error would spam the store on
+            // every typo. Anything else is a real failure: record it.
+            if (e !is javax.crypto.AEADBadTagException) {
+                com.app.nuri.reports.android.CrashReports.recordError("Backup import", e)
+            }
+            BackupResult(false, "Could not open that backup. The passphrase may be wrong, or the file is damaged. Nothing was changed.")
+        }
     }
 }
