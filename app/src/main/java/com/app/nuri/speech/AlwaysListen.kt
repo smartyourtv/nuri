@@ -27,7 +27,7 @@ class AlwaysListenController(private val vad: EnergyVad = EnergyVad()) {
     fun state(runningService: Boolean = false): AlwaysListenState = AlwaysListenState(
         enabledBySettings = enabled, running = runningService && enabled, gateOpen = gateOpen)
     fun diagnosticsText(): String =
-        if (!enabled) "Always listen is OFF. Nuri only listens when you tap and talk."
+        if (!enabled) "Always listen is OFF. Ilona only listens when you tap and talk."
         else "Always listen is set ON, waiting for '${NuriSettings.WAKE_PHRASE}'. " + vad.diagnosticsText() +
              " Listening service itself: not built yet (needs on-device testing)."
 }

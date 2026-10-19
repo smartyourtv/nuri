@@ -41,7 +41,7 @@ object MedReminder {
         if (nm.getNotificationChannel(CHANNEL_ID) == null) {
             nm.createNotificationChannel(
                 NotificationChannel(CHANNEL_ID, "Medicine reminders", NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "Time-for-medicine reminders from Nuri."
+                    description = "Time-for-medicine reminders from Ilona."
                 },
             )
         }
@@ -94,7 +94,7 @@ class MedReminderReceiver : BroadcastReceiver() {
                 val notification = NotificationCompat.Builder(appContext, MedReminder.CHANNEL_ID)
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle("Time for your $name")
-                    .setContentText("When you've taken it, open Nuri and tap 'I took my medicine'.")
+                    .setContentText("When you've taken it, open Ilona and tap 'I took my medicine'.")
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setContentIntent(openApp)
                     .setAutoCancel(true)

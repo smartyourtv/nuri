@@ -184,7 +184,7 @@ fun ShowNuriScreen(
             lines += composed
             val key = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
             val time = SimpleDateFormat("h:mm a", Locale.US).format(Date())
-            repository.addDiaryEntry(DiaryEntry(key, time, "Show Nuri: ${subject.name.lowercase().replace('_', ' ')}", "Read/described"))
+            repository.addDiaryEntry(DiaryEntry(key, time, "Show Ilona: ${subject.name.lowercase().replace('_', ' ')}", "Read/described"))
             speakResult(composed, readAloudOn)
         }
     }
@@ -216,7 +216,7 @@ fun ShowNuriScreen(
     }
 
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Show Nuri", style = MaterialTheme.typography.headlineMedium)
+        Text("Show Ilona", style = MaterialTheme.typography.headlineMedium)
         OutlinedButton(onClick = { speaker.stop(); onBack() }, modifier = Modifier.fillMaxWidth()) { Text("Back to my home screen", style = MaterialTheme.typography.labelLarge) }
         Text(ImageQuality.AIMING_INTRO, style = MaterialTheme.typography.bodyLarge)
         Button(onClick = {
@@ -246,7 +246,7 @@ fun ShowNuriScreen(
                 scope.launch {
                     val key = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                     val time = SimpleDateFormat("h:mm a", Locale.US).format(Date())
-                    repository.addDiaryEntry(DiaryEntry(key, time, "Show Nuri: asked with a photo (${lastSubject.name.lowercase().replace('_', ' ')})", "Asked $askTarget"))
+                    repository.addDiaryEntry(DiaryEntry(key, time, "Show Ilona: asked with a photo (${lastSubject.name.lowercase().replace('_', ' ')})", "Asked $askTarget"))
                 }
                 lines += "Written in the diary for $askTarget — please show them this photo on the phone, too."
             }, modifier = Modifier.fillMaxWidth()) { Text("Ask $askTarget with this photo", style = MaterialTheme.typography.labelLarge) }

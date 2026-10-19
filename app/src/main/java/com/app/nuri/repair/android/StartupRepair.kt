@@ -64,11 +64,11 @@ object StartupRepair {
         when {
             event != null && probeError == null -> CrashReports.recordRepair(
                 what = "Damaged settings file",
-                evidence = "Nuri's saved settings could not be read " +
+                evidence = "Ilona's saved settings could not be read " +
                     "(${event.exceptionClass}: ${event.exceptionMessage ?: "no message"}). " +
                     (event.preservedCopyName?.let {
-                        "A copy of the damaged file was kept inside Nuri ($it), so nothing was thrown away. "
-                    } ?: "Nuri tried to keep a copy of the damaged file, but that copy failed. ") +
+                        "A copy of the damaged file was kept inside Ilona ($it), so nothing was thrown away. "
+                    } ?: "Ilona tried to keep a copy of the damaged file, but that copy failed. ") +
                     "Settings were restarted from their safe standard values. " +
                     "Check after the repair: settings can be read again — passed. " +
                     "Any choices stored in the damaged file went back to their standard settings; " +
@@ -77,7 +77,7 @@ object StartupRepair {
             )
             event != null && probeError != null -> CrashReports.recordRepair(
                 what = "Damaged settings file",
-                evidence = "Nuri's saved settings could not be read " +
+                evidence = "Ilona's saved settings could not be read " +
                     "(${event.exceptionClass}: ${event.exceptionMessage ?: "no message"}), and " +
                     "settings still could not be read after the repair attempt " +
                     "(${probeError.javaClass.name}: ${probeError.message ?: "no message"}). " +
@@ -107,7 +107,7 @@ object StartupRepair {
                     val verified = store.read() == null
                     CrashReports.recordRepair(
                         what = "Update that never finished",
-                        evidence = "Nuri had a note saying an update to version " +
+                        evidence = "Ilona had a note saying an update to version " +
                             "${action.pending.versionName} (code ${action.pending.versionCode}) was " +
                             "on its way, but that version never arrived and the note was more " +
                             "than a week old. The stale note was cleared. " +
@@ -141,8 +141,8 @@ object StartupRepair {
                         store.clearRepairFailureSignature()
                         CrashReports.recordRepair(
                             what = "Nightly update check not scheduled",
-                            evidence = "The nightly update check was not scheduled when Nuri started. " +
-                                "Nuri scheduled it again during this start. " +
+                            evidence = "The nightly update check was not scheduled when Ilona started. " +
+                                "Ilona scheduled it again during this start. " +
                                 "Check after the repair: the nightly check is scheduled — passed.",
                             status = RepairStatus.REPAIRED
                         )
@@ -156,10 +156,10 @@ object StartupRepair {
                             store.setRepairFailureSignature(signature)
                             CrashReports.recordRepair(
                                 what = "Nightly update check not scheduled",
-                                evidence = "The nightly update check was not scheduled when Nuri started, " +
+                                evidence = "The nightly update check was not scheduled when Ilona started, " +
                                     "and scheduling it again during this start did not succeed — the " +
                                     "separate scheduling report from this start carries the technical " +
-                                    "evidence. Update checks will run when Nuri is opened instead. " +
+                                    "evidence. Update checks will run when Ilona is opened instead. " +
                                     "This failure is reported once for this app version, not on every start.",
                                 status = RepairStatus.REPAIR_FAILED
                             )

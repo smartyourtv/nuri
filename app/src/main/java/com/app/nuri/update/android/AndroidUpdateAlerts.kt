@@ -31,7 +31,7 @@ class AndroidUpdateAlerts(context: Context, private val store: UpdateRuntimeStor
 
     override fun afterNote(text: String) {
         store.recordAfterNote(text)
-        post("Nuri", text)
+        post("Ilona", text)
     }
 
     private fun post(title: String, text: String) {
@@ -42,8 +42,8 @@ class AndroidUpdateAlerts(context: Context, private val store: UpdateRuntimeStor
         }
         val manager = app.getSystemService(NotificationManager::class.java) ?: return
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Nuri updates", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "Quiet notes about Nuri updates — nothing ever looks different."
+            NotificationChannel(CHANNEL_ID, "Ilona updates", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Quiet notes about Ilona updates — nothing ever looks different."
             }
         )
         val launch = app.packageManager.getLaunchIntentForPackage(app.packageName)

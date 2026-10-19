@@ -6,7 +6,7 @@ package com.app.nuri.backup
 class DriveAppDataBackup : BackupManager {
     override val layerName = "Google Drive backup (hidden app folder)"
     override fun isAvailable(): Boolean = false
-    override fun statusText(): String = "Not connected yet. When set up, Nuri will quietly save an encrypted copy to the senior's own Google Drive each day. TODO(GATED-GOOGLE): sign-in and Drive app-data wiring."
+    override fun statusText(): String = "Not connected yet. When set up, Ilona will quietly save an encrypted copy to the senior's own Google Drive each day. TODO(GATED-GOOGLE): sign-in and Drive app-data wiring."
     fun backupNow(): BackupResult = BackupResult(false, "Not connected yet — no backup was sent anywhere.")
 }
 class GmailSnapshotBackup : BackupManager {

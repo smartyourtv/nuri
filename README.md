@@ -1,4 +1,4 @@
-# Nuri (working tree)
+# Ilona (working tree)
 
 Voice-first AI companion for seniors — personal/family project, given
 away free (never sold).
@@ -13,11 +13,11 @@ away free (never sold).
   [`TERMS.md`](TERMS.md). Privacy policy:
   https://smartyourtv.github.io/nuri/privacy-policy
 
-> Nuri is a free helper app — not a medical device. It never calls
+> Ilona is a free helper app — not a medical device. It never calls
 > 911 by itself; in an emergency, call 911. Medicine reminders are
 > memory aids based on a schedule you enter, not medical advice.
 > Safety features are aids that can miss things — please don't rely
-> on Nuri alone for anyone's safety.
+> on Ilona alone for anyone's safety.
 
 Status: **features built 2026-10-16** (Phase D + bug hunt): tiers, first-install
 modes, caregiver dashboard, backup/restore, Bluetooth memory, game, readability

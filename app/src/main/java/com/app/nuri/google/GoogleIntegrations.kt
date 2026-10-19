@@ -16,11 +16,11 @@ abstract class NotConnectedIntegration(override val service: GoogleService, priv
     override fun setupChecklist(): List<String> = listOf(
         "Use the senior's existing Google account — do not make a new one.",
         "The caregiver helps with sign-in, in person.",
-        "Nuri never stores, speaks, or shows the password.",
-        "If sign-in is ever lost, Nuri says: ask your caregiver — they can get you back in.")
+        "Ilona never stores, speaks, or shows the password.",
+        "If sign-in is ever lost, Ilona says: ask your caregiver — they can get you back in.")
 }
 class DriveIntegration : NotConnectedIntegration(GoogleService.DRIVE, "Used for the quiet daily backup copy.")
-class ContactsIntegration : NotConnectedIntegration(GoogleService.CONTACTS, "Used so Nuri can show a name and photo when family call.")
+class ContactsIntegration : NotConnectedIntegration(GoogleService.CONTACTS, "Used so Ilona can show a name and photo when family call.")
 class CalendarIntegration : NotConnectedIntegration(GoogleService.CALENDAR, "Used for the calendar the caregiver shares (visits, appointments).")
 object GoogleDiagnostics {
     fun text(): String = listOf(DriveIntegration(), ContactsIntegration(), CalendarIntegration())

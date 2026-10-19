@@ -219,9 +219,9 @@ object UpdateScheduler {
         store.setScheduleFailureSignature(signature)
         com.app.nuri.reports.android.CrashReports.recordProblem(
             "Nightly update check could not be scheduled",
-            "Nuri could not schedule its nightly update check. Failure signature: $signature. " +
+            "Ilona could not schedule its nightly update check. Failure signature: $signature. " +
                 "Evidence: $evidence" +
-                "Until this is fixed, update checks happen when Nuri is opened instead. " +
+                "Until this is fixed, update checks happen when Ilona is opened instead. " +
                 "This report is written once for this exact failure; it will not repeat on every start."
         )
     }

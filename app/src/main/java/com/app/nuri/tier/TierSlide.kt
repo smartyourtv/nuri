@@ -26,6 +26,6 @@ object TierSlideAdvisor {
         }
         return "In the last $daysWindow days, help was asked for or a walk-through got stuck $recentStuckOrAskedCount times. " +
             "It may be worth trying the $gentler setting for a while — framed as fit, not decline: let's make this easier. " +
-            "Only the caregiver changes this; Nuri is just noticing the pattern."
+            "Only the caregiver changes this; Ilona is just noticing the pattern."
     }
 }

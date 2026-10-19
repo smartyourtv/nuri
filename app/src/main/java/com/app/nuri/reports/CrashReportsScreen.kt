@@ -64,13 +64,13 @@ fun CrashReportsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         val current = openReport
         if (current == null) {
             Text(
-                "If Nuri ever has a problem, it saves a report here and as a file in the " +
+                "If Ilona ever has a problem, it saves a report here and as a file in the " +
                     "Downloads folder. Reports never leave this phone unless you share one."
             )
             if (feedback.isNotEmpty()) Text(feedback, style = MaterialTheme.typography.titleMedium)
             when {
                 !loaded -> Text("Looking for reports…")
-                reports.isEmpty() -> Text("There are no reports. If Nuri has a problem, a report will appear here.")
+                reports.isEmpty() -> Text("There are no reports. If Ilona has a problem, a report will appear here.")
                 else -> reports.forEach { report ->
                     Text(report.summaryLine, style = MaterialTheme.typography.bodyLarge)
                     Text(
@@ -96,7 +96,7 @@ fun CrashReportsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 onClick = {
                     val send = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(Intent.EXTRA_SUBJECT, "Nuri report — ${current.file.name}")
+                        putExtra(Intent.EXTRA_SUBJECT, "Ilona report — ${current.file.name}")
                         putExtra(Intent.EXTRA_TEXT, openText)
                     }
                     context.startActivity(Intent.createChooser(send, "Share this report"))

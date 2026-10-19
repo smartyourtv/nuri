@@ -105,9 +105,9 @@ object SpouseResponse {
 
     /** Setup-screen explanation for each mode (plain language). */
     fun setupExplanation(mode: SpouseResponseMode): String = when (mode) {
-        SpouseResponseMode.UNSET -> "Not chosen yet. Nuri will comfort, and offer to ask the caregiver. Nuri never makes up facts."
-        SpouseResponseMode.GENTLE_TRUTH -> "Nuri gently says that they passed away, then stays with them."
-        SpouseResponseMode.COMFORT_REDIRECT -> "Nuri turns to happy memories together instead."
-        SpouseResponseMode.ASK_CAREGIVER -> "Nuri suggests asking the caregiver together."
+        SpouseResponseMode.UNSET -> "Not chosen yet. Ilona will comfort, and offer to ask the caregiver. Ilona never makes up facts."
+        SpouseResponseMode.GENTLE_TRUTH -> "Ilona gently says that they passed away, then stays with them."
+        SpouseResponseMode.COMFORT_REDIRECT -> "Ilona turns to happy memories together instead."
+        SpouseResponseMode.ASK_CAREGIVER -> "Ilona suggests asking the caregiver together."
     }
 }

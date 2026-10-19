@@ -49,12 +49,12 @@ object SelfUpdatePolicy {
             isPrivateFlavor -> "On for this personal build — updates look after themselves."
             accessMode == NuriSettings.AccessMode.MANAGED -> "On — in this setup, your caregiver looks after updates."
             toggle == true -> "On — you chose automatic updates. You won't need to do anything when a new version is ready."
-            else -> "Off — Nuri will tell you once when a new version is ready, and nothing installs until you tap Update."
+            else -> "Off — Ilona will tell you once when a new version is ready, and nothing installs until you tap Update."
         }
 
     /** The first-install offer copy (public flavor), verbatim from the brief. */
     const val FIRST_INSTALL_OFFER_TEXT =
-        "Update Nuri automatically — you won't need to do anything when a new version is ready"
+        "Update Ilona automatically — you won't need to do anything when a new version is ready"
 
     /** Newer-only rule: equal or lower version codes are never an update. */
     fun isNewer(installedVersionCode: Int, offer: UpdateOffer): Boolean =
@@ -96,7 +96,7 @@ object ApkVerification {
         !hashMatches(computedApkSha256Hex, offer.sha256Hex) ->
             "The downloaded update did not match its safety fingerprint, so it was not installed."
         !certificateMatches(installedCertSha256Hex, candidateCertSha256Hex) ->
-            "The downloaded update was not signed by the same maker as this Nuri, so it was not installed."
+            "The downloaded update was not signed by the same maker as this Ilona, so it was not installed."
         else -> null
     }
 }

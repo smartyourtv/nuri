@@ -34,7 +34,7 @@ class CrashReportCoreTest {
         exceptionClass = throwable?.javaClass?.name,
         exceptionMessage = throwable?.message,
         stackTrace = throwable?.let { CrashReport.stackTraceOf(it) },
-        breadcrumbs = listOf("+0 ms — crash reporting installed", "+40 ms — Nuri started")
+        breadcrumbs = listOf("+0 ms — crash reporting installed", "+40 ms — Ilona started")
     )
 
     // --- breadcrumbs ----------------------------------------------------
@@ -61,7 +61,7 @@ class CrashReportCoreTest {
     @Test fun fileNameMatchesRulePatternAndRoundTrips() {
         val epoch = 1_700_000_000_000L // whole second
         val name = ReportFormatter.fileNameFor(epoch)
-        assertTrue(name.matches(Regex("""Nuri-crash-\d{8}-\d{6}\.txt""")))
+        assertTrue(name.matches(Regex("""Ilona-crash-\d{8}-\d{6}\.txt""")))
         assertEquals(epoch, FileReportStore.epochFromName(name))
     }
 
@@ -70,10 +70,10 @@ class CrashReportCoreTest {
         val lines = text.lines()
         assertEquals(CrashReport.crashSummary(), lines.first())
         assertTrue(text.contains("Kind: crash"))
-        assertTrue(text.contains("Nuri 0.1.0-scaffold (version code 1), private edition"))
+        assertTrue(text.contains("Ilona 0.1.0-scaffold (version code 1), private edition"))
         assertTrue(text.contains("SM-G973F, Android 12 (API 31)"))
         assertTrue(text.contains("java.lang.IllegalStateException: boom"))
-        assertTrue(text.contains("+40 ms — Nuri started"))
+        assertTrue(text.contains("+40 ms — Ilona started"))
         assertTrue(text.contains("IllegalStateException")) // stack trace block
     }
 
@@ -89,16 +89,60 @@ class CrashReportCoreTest {
     }
 
     @Test fun uniqueFileNameAvoidsOverwritingEvidence() {
-        val base = "Nuri-crash-20261017-120000.txt"
+        val base = "Ilona-crash-20261017-120000.txt"
         assertEquals(base, ReportFormatter.uniqueFileName(base) { false })
         assertEquals(
-            "Nuri-crash-20261017-120000-2.txt",
+            "Ilona-crash-20261017-120000-2.txt",
             ReportFormatter.uniqueFileName(base) { it == base }
         )
         assertEquals(
-            "Nuri-crash-20261017-120000-3.txt",
+            "Ilona-crash-20261017-120000-3.txt",
             ReportFormatter.uniqueFileName(base) { it == base || it.endsWith("-2.txt") }
         )
+    }
+
+    // --- rename continuity (v0.3.3): reports written before the rename ---
+
+    @Test fun legacyNuriReportNamesStillParse() {
+        // A report file named by a pre-rename version still yields its
+        // timestamp — the same stamp parses identically under either
+        // prefix, including the same-second "-2" suffix form. (Compared
+        // prefix-to-prefix so the test is timezone-independent, like the
+        // formatter round-trip above.)
+        val legacy = FileReportStore.epochFromName("Nuri-crash-20231114-221320.txt")
+        assertTrue(legacy != null)
+        assertEquals(
+            FileReportStore.epochFromName("Ilona-crash-20231114-221320.txt"),
+            legacy
+        )
+        assertEquals(
+            FileReportStore.epochFromName("Ilona-crash-20231114-221320-2.txt"),
+            FileReportStore.epochFromName("Nuri-crash-20231114-221320-2.txt")
+        )
+    }
+
+    @Test fun storeListsBothLegacyAndNewReportsNewestFirst() {
+        // Simulate a device that already carries a pre-rename report:
+        // after the rename it must still list alongside new reports,
+        // ordered by the timestamp in its name.
+        val dir = tmp.newFolder("reports-mixed")
+        val legacyName = "Nuri-crash-" +
+            java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                .format(java.util.Date(1_700_000_000_000L)) + ".txt"
+        File(dir, legacyName)
+            .writeText("Ilona stopped unexpectedly. (legacy report)\nbody")
+        val store = FileReportStore(dir)
+        val newer = store.save(
+            ReportFormatter.format(report(epochMillis = 1_700_000_060_000L)),
+            1_700_000_060_000L
+        )
+        assertTrue(newer.name.startsWith("Ilona-crash-"))
+        val listed = store.list()
+        assertEquals(2, listed.size)
+        assertEquals(newer.name, listed[0].file.name)
+        assertEquals(legacyName, listed[1].file.name)
+        assertEquals("Ilona stopped unexpectedly. (legacy report)", listed[1].summaryLine)
+        assertTrue(store.read(listed[1].file).contains("legacy report"))
     }
 
     // --- store --------------------------------------------------------------

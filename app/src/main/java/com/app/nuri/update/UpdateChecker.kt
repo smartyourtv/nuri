@@ -14,11 +14,11 @@ data class UpdateDecision(val updateAvailable: Boolean, val shouldNotify: Boolea
 object UpdateChecker {
     fun decide(currentVersionCode: Int, manifest: VersionManifest?, lastNotifiedVersionCode: Int, dismissedVersionCode: Int): UpdateDecision {
         if (manifest == null) return UpdateDecision(false, false, "Could not check for updates right now. Nothing was changed.")
-        if (manifest.versionCode <= currentVersionCode) return UpdateDecision(false, false, "Nuri is up to date.")
+        if (manifest.versionCode <= currentVersionCode) return UpdateDecision(false, false, "Ilona is up to date.")
         val alreadyHandled = lastNotifiedVersionCode >= manifest.versionCode || dismissedVersionCode >= manifest.versionCode
         return UpdateDecision(true, shouldNotify = !alreadyHandled,
-            detail = if (alreadyHandled) "A newer Nuri is ready when you are. You already saw this notice, so it will not keep asking."
-                     else "A newer Nuri is ready. It looks and sounds exactly the same — updates never change how Nuri works or sounds.")
+            detail = if (alreadyHandled) "A newer Ilona is ready when you are. You already saw this notice, so it will not keep asking."
+                     else "A newer Ilona is ready. It looks and sounds exactly the same — updates never change how Ilona works or sounds.")
     }
     fun applyPolicyText(managedMode: Boolean): String =
         if (managedMode) "In this setup, your caregiver looks after updates for you." else "Tap Update only when you want it. Nothing installs by itself."

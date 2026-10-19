@@ -200,6 +200,6 @@ object HelperEngine {
 
     val genericConfusionHelper: HelperDef = HelperDef(
         0, "MENU", "I'm confused — what is it?", HelperMode.GUIDED, triggers = listOf("i'm confused", "i need help", "i'm stuck", "i don't know"),
-        steps = listOf("That's fine — tell me in your own words what's confusing you, and we'll take it from there.", "Or tap a topic below: Phone sound and calls, Messages, The TV, Letters and bills, Safety and scams, Show Nuri — take a photo of something."),
+        steps = listOf("That's fine — tell me in your own words what's confusing you, and we'll take it from there.", "Or tap a topic below: Phone sound and calls, Messages, The TV, Letters and bills, Safety and scams, Show Ilona — take a photo of something."),
     )
 }

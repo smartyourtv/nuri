@@ -45,14 +45,14 @@ object EmotionProsody {
     fun descriptionFor(level: NuriSettings.EmotionLevel): String = when (level) {
         NuriSettings.EmotionLevel.CALM -> "Mostly neutral and steady, with very little emotion."
         NuriSettings.EmotionLevel.GENTLE -> "Soft warmth, with gentle reactions now and then."
-        NuriSettings.EmotionLevel.WARM -> "Natural warmth. Nuri chuckles when something is funny and sounds caring when you are down. This is the usual setting."
-        NuriSettings.EmotionLevel.EXPRESSIVE -> "Lots of feeling: laughs, surprise, and comfort, all in Nuri's same voice."
-        NuriSettings.EmotionLevel.FULL_HEARTED -> "The warmest and most lively setting. Nuri laughs freely and sounds fully engaged."
+        NuriSettings.EmotionLevel.WARM -> "Natural warmth. Ilona chuckles when something is funny and sounds caring when you are down. This is the usual setting."
+        NuriSettings.EmotionLevel.EXPRESSIVE -> "Lots of feeling: laughs, surprise, and comfort, all in Ilona's same voice."
+        NuriSettings.EmotionLevel.FULL_HEARTED -> "The warmest and most lively setting. Ilona laughs freely and sounds fully engaged."
     }
 }
 
 /** Honest scaffold engine: reports no voice until the real engine lands. */
 class NotBuiltTtsEngine : TtsEngine {
     override fun currentVoice(): String? = null
-    fun statusText(): String = "Speaking voice: not built yet. When it arrives, Nuri will always use the same one voice."
+    fun statusText(): String = "Speaking voice: not built yet. When it arrives, Ilona will always use the same one voice."
 }

@@ -79,32 +79,32 @@ fun FamilyHelpSetupSection() {
     var note by remember { mutableStateOf("") }
 
     Text("Family & help setup", style = MaterialTheme.typography.titleLarge)
-    Text("These are set up once, together. They power the 'I'm confused' help, the medicine records, and the safety buttons. Nuri never stores or speaks passwords — nothing below asks for one.")
+    Text("These are set up once, together. They power the 'I'm confused' help, the medicine records, and the safety buttons. Ilona never stores or speaks passwords — nothing below asks for one.")
 
     // Caregiver name (feeds the public ASK wording; private always says Shawn)
     var nameField by remember(caregiverName) { mutableStateOf(caregiverName) }
     OutlinedTextField(value = nameField, onValueChange = { nameField = it }, label = { Text("Caregiver's name") }, modifier = Modifier.fillMaxWidth())
-    Text("When help is hard, Nuri offers to 'ask ${FlavorHooks.askNameOverride() ?: nameField.ifBlank { "…" }}'.")
+    Text("When help is hard, Ilona offers to 'ask ${FlavorHooks.askNameOverride() ?: nameField.ifBlank { "…" }}'.")
     Button(onClick = { scope.launch { repo.setCaregiverName(nameField.trim()) }; note = "Saved the caregiver name." }, modifier = Modifier.fillMaxWidth()) { Text("Save caregiver name") }
 
     // Family safe word
     var wordField by remember { mutableStateOf("") }
     OutlinedTextField(value = wordField, onValueChange = { wordField = it }, label = { Text("Family safe word (new or replacement)") },
         visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-    Text(if (safeWord.isBlank()) "No safe word set yet. Choose a word only your family knows — on any 'emergency' call claiming to be family, Nuri will ask whether the caller knew it. Scammers, even ones copying a voice, won't."
-    else "A safe word is set. It is never shown here, never spoken aloud by Nuri, and never written in the diary.")
+    Text(if (safeWord.isBlank()) "No safe word set yet. Choose a word only your family knows — on any 'emergency' call claiming to be family, Ilona will ask whether the caller knew it. Scammers, even ones copying a voice, won't."
+    else "A safe word is set. It is never shown here, never spoken aloud by Ilona, and never written in the diary.")
     Button(onClick = { if (wordField.isNotBlank()) { scope.launch { repo.setSafeWord(wordField.trim()) }; wordField = ""; note = "Safe word saved." } }, modifier = Modifier.fillMaxWidth()) { Text("Save safe word") }
 
     // Deceased-spouse response
     Text("When they ask for a husband or wife who has passed", style = MaterialTheme.typography.titleLarge)
-    Text("The family chooses this. Nuri never improvises facts about them, and there is no made-up default.")
+    Text("The family chooses this. Ilona never improvises facts about them, and there is no made-up default.")
     SpouseResponseMode.values().forEach { m ->
         Button(onClick = {
             // Tap again to deselect (v0.3.2 Part E): tapping the chosen
             // mode clears back to UNSET, persisted like any selection.
             val next = SpouseResponse.toggle(spouseMode, m)
             scope.launch { repo.setSpouseMode(next) }
-            note = if (next == SpouseResponseMode.UNSET) "Cleared — no way of answering is chosen now. Nuri will comfort and offer to ask, and never improvise." else "Saved how Nuri answers."
+            note = if (next == SpouseResponseMode.UNSET) "Cleared — no way of answering is chosen now. Ilona will comfort and offer to ask, and never improvise." else "Saved how Ilona answers."
         }, modifier = Modifier.fillMaxWidth()) {
             Text(if (m == spouseMode) "${m.name.replace('_', ' ')} — chosen" else m.name.replace('_', ' '))
         }
@@ -138,7 +138,7 @@ fun FamilyHelpSetupSection() {
 
     // Medicine schedule
     Text("Medicine schedule", style = MaterialTheme.typography.titleLarge)
-    Text("Names exactly as written on the bottle. Nuri reminds, records confirmations, and flags a missed dose for the caregiver. Nuri never changes doses.")
+    Text("Names exactly as written on the bottle. Ilona reminds, records confirmations, and flags a missed dose for the caregiver. Ilona never changes doses.")
     medSchedule.forEach { e ->
         Text("${e.nameAsWritten} — ${e.timeLabel}${if (e.dueHour in 0..23) " (reminder at ${e.dueHour}:00)" else ""}${e.daysLeft?.let { " · about $it day(s) left" } ?: ""}")
         OutlinedButton(onClick = { scope.launch { repo.setMedSchedule(medSchedule - e) } }, modifier = Modifier.fillMaxWidth()) { Text("Remove ${e.nameAsWritten}") }
@@ -170,7 +170,7 @@ fun FamilyHelpSetupSection() {
     Text("Setup checklist for the family", style = MaterialTheme.typography.titleLarge)
     androidx.compose.foundation.layout.Row {
         Checkbox(checked = sealedDone, onCheckedChange = { v -> scope.launch { repo.setSealedPaperDone(v) } })
-        Text("Sealed paper copy of the Google password, written by hand, sealed, and kept by the caregiver. This is the account password — different from the retired recovery phrase, which no longer exists. Nuri never sees it.")
+        Text("Sealed paper copy of the Google password, written by hand, sealed, and kept by the caregiver. This is the account password — different from the retired recovery phrase, which no longer exists. Ilona never sees it.")
     }
     androidx.compose.foundation.layout.Row {
         Checkbox(checked = chainDone, onCheckedChange = { v -> scope.launch { repo.setRecoveryChainDone(v) } })
@@ -219,23 +219,23 @@ fun FamilyHelpSetupSection() {
     // A closer look online (v0.3.2 Part D — caregiver's OWN free key;
     // bring-your-own-key: no key exists in the app itself, ever).
     Text("A closer look online (optional, for the caregiver)", style = MaterialTheme.typography.titleLarge)
-    Text("Show Nuri reads and identifies on this phone. The phone's own eyes are limited — it is good at reading words, less good at naming things. If you add a free Google Gemini key, photos the person asks about get a closer look online, and Nuri can name many more things.")
-    Text("Photos you ask Nuri to identify are sent to Google for a closer look. Nothing is sent until you add a key.")
+    Text("Show Ilona reads and identifies on this phone. The phone's own eyes are limited — it is good at reading words, less good at naming things. If you add a free Google Gemini key, photos the person asks about get a closer look online, and Ilona can name many more things.")
+    Text("Photos you ask Ilona to identify are sent to Google for a closer look. Nothing is sent until you add a key.")
     if (cloudHintPending && cloudVisionKey.isBlank()) {
-        Text("A photo recently could only be answered on this phone. Adding the free key would let Nuri see it much more clearly.", style = MaterialTheme.typography.titleMedium)
+        Text("A photo recently could only be answered on this phone. Adding the free key would let Ilona see it much more clearly.", style = MaterialTheme.typography.titleMedium)
     }
     var keyField by remember { mutableStateOf("") }
     OutlinedTextField(value = keyField, onValueChange = { keyField = it }, label = { Text("Google Gemini key (free, from Google AI Studio)") },
         visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-    Text(if (cloudVisionKey.isBlank()) "No key is set — Show Nuri answers on this phone only. The key is free: search 'Google AI Studio' in a browser, sign in, choose 'Get API key', and paste it here. It is stored only on this phone and is never shown in full again."
-    else "A key is set. Show Nuri will use the closer look online when there is a connection, and answer on this phone when there isn't.")
+    Text(if (cloudVisionKey.isBlank()) "No key is set — Show Ilona answers on this phone only. The key is free: search 'Google AI Studio' in a browser, sign in, choose 'Get API key', and paste it here. It is stored only on this phone and is never shown in full again."
+    else "A key is set. Show Ilona will use the closer look online when there is a connection, and answer on this phone when there isn't.")
     Button(onClick = { if (keyField.isNotBlank()) { scope.launch { repo.setCloudVisionKey(keyField) }; keyField = ""; note = "Key saved on this phone." } }, modifier = Modifier.fillMaxWidth()) { Text("Save the key") }
     if (cloudVisionKey.isNotBlank()) {
-        OutlinedButton(onClick = { scope.launch { repo.setCloudVisionKey("") }; note = "Key removed. Show Nuri answers on this phone only." }, modifier = Modifier.fillMaxWidth()) { Text("Remove the key") }
+        OutlinedButton(onClick = { scope.launch { repo.setCloudVisionKey("") }; note = "Key removed. Show Ilona answers on this phone only." }, modifier = Modifier.fillMaxWidth()) { Text("Remove the key") }
     }
 
     if (note.isNotEmpty()) Text(note, style = MaterialTheme.typography.titleMedium)
-    Text("Vision: Show Nuri reads and identifies on this phone (ML Kit). With a caregiver's key added above, photos can also get a closer look online (Google Gemini). If a photo can't be read either way, Nuri says so and offers to ask ${FlavorHooks.askNameOverride() ?: "the caregiver"} with the photo.")
+    Text("Vision: Show Ilona reads and identifies on this phone (ML Kit). With a caregiver's key added above, photos can also get a closer look online (Google Gemini). If a photo can't be read either way, Ilona says so and offers to ask ${FlavorHooks.askNameOverride() ?: "the caregiver"} with the photo.")
 }
 
 @Composable
@@ -245,7 +245,7 @@ fun DiaryView(repo: SettingsRepository, onBack: () -> Unit) {
     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Help diary", style = MaterialTheme.typography.headlineMedium)
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
-        Text("Everything Nuri helped with, in plain words. In 'Just me' mode this stays on this phone only.")
+        Text("Everything Ilona helped with, in plain words. In 'Just me' mode this stays on this phone only.")
         if (alerts.isNotEmpty()) {
             Text("Safety notes", style = MaterialTheme.typography.titleLarge)
             alerts.takeLast(5).reversed().forEach { a -> Card { Column(Modifier.padding(16.dp)) { Text(a.title, style = MaterialTheme.typography.titleMedium); Text(a.detail); Text("${a.dayKey} · ${a.timeText}") } } }
@@ -279,7 +279,7 @@ fun LicensesView(onBack: () -> Unit) {
     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Licenses & attributions", style = MaterialTheme.typography.headlineMedium)
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back to Settings") }
-        Text("Nuri's own source code is licensed GPL-3.0-or-later, with an additional permission (a \"linking exception\") covering the Google libraries inside the app. The full license, the exception, and all third-party notices ship with the source in both project repositories, and the full notices are included in this app under \"Read the full notices\" below.")
+        Text("Ilona's own source code is licensed GPL-3.0-or-later, with an additional permission (a \"linking exception\") covering the Google libraries inside the app. The full license, the exception, and all third-party notices ship with the source in both project repositories, and the full notices are included in this app under \"Read the full notices\" below.")
         Text("Built with", style = MaterialTheme.typography.titleLarge)
         Text("• ML Kit client libraries (Google) — Apache License 2.0.")
         Text("• The ML Kit models and scanning pipelines built into this app (Google) are Google software, not open source. They are provided under the ML Kit Terms of Service (https://developers.google.com/ml-kit/terms). They read and identify only on this phone — your photos are not sent to Google. ML Kit does send Google small technical reports about its own performance; see the Privacy Policy.")

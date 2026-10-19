@@ -21,7 +21,7 @@ class ErrorSummaryTest {
     @Test
     fun summaryWithoutTypeMatchesTheOriginalWording() {
         assertEquals(
-            "Something in Nuri went wrong, but Nuri kept running. (Where: Update schedule at startup.)",
+            "Something in Ilona went wrong, but Ilona kept running. (Where: Update schedule at startup.)",
             CrashReport.errorSummary("Update schedule at startup")
         )
         assertEquals(

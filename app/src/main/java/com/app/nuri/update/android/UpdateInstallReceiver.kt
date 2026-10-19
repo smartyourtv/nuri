@@ -38,16 +38,16 @@ class UpdateInstallReceiver : BroadcastReceiver() {
                 }
             }
             PackageInstaller.STATUS_SUCCESS -> {
-                store.recordRunResult("The update installed. Nuri will check itself when it starts again.")
+                store.recordRunResult("The update installed. Ilona will check itself when it starts again.")
             }
             else -> {
                 val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
                     ?.takeIf { it.isNotBlank() }
                 store.clear()
                 AndroidUpdateAlerts(app, store).caregiverAlert(
-                    "Nuri update did not install",
+                    "Ilona update did not install",
                     "The update did not install" + (message?.let { ": $it" } ?: "") +
-                        ". Nuri keeps running the version it has."
+                        ". Ilona keeps running the version it has."
                 )
             }
         }

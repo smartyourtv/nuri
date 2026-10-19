@@ -36,7 +36,7 @@ object BackupCrypto {
     }
     fun decrypt(encoded: String, passphrase: String): ByteArray {
         val lines = encoded.trim().lines()
-        require(lines.isNotEmpty() && lines[0] == "NURI-BACKUP-V1") { "Not a Nuri backup file." }
+        require(lines.isNotEmpty() && lines[0] == "NURI-BACKUP-V1") { "Not a Ilona backup file." }
         val blob = Base64.getDecoder().decode(lines.drop(1).joinToString(""))
         require(blob.size > 28) { "Backup file is too short or damaged." }
         val salt = blob.copyOfRange(0, 16); val iv = blob.copyOfRange(16, 28); val ct = blob.copyOfRange(28, blob.size)

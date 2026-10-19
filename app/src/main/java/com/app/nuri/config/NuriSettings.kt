@@ -35,7 +35,7 @@ object NuriSettings {
     val DEFAULT_EMOTION_LEVEL: EmotionLevel = EmotionLevel.WARM
 
     /** Wake phrase. The "hey nuri" wake model itself is GATED voice work. */
-    const val WAKE_PHRASE: String = "hey nuri"
+    const val WAKE_PHRASE: String = "hey ilona"
 
     /** Bluetooth remembered-speaker slots (brief §9): Nuri 10 (Scout has 5). */
     const val BLUETOOTH_SLOT_COUNT: Int = 10

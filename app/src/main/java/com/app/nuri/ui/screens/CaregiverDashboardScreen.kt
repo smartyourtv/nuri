@@ -44,11 +44,11 @@ fun CaregiverDashboardScreen(
     }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Family summary", style = MaterialTheme.typography.headlineMedium)
-        Text("This is a gentle summary of conversations and check-ins — not surveillance. It shows Nuri's real records; when there are none yet, it says so.")
+        Text("This is a gentle summary of conversations and check-ins — not surveillance. It shows Ilona's real records; when there are none yet, it says so.")
         if (cloudHintPending) {
             Card { Column(Modifier.padding(16.dp)) {
-                Text("A note about Show Nuri", style = MaterialTheme.typography.titleMedium)
-                Text("A photo recently could only be answered on this phone, because the free 'closer look' key isn't set up yet. Adding it — in Settings, at the end of the 'Family & help setup' section — would let Nuri identify many more things. The key is free from Google, and a photo is only sent when someone asks Nuri to look at it.")
+                Text("A note about Show Ilona", style = MaterialTheme.typography.titleMedium)
+                Text("A photo recently could only be answered on this phone, because the free 'closer look' key isn't set up yet. Adding it — in Settings, at the end of the 'Family & help setup' section — would let Ilona identify many more things. The key is free from Google, and a photo is only sent when someone asks Ilona to look at it.")
             } }
         }
         data.noDataReason?.let { Text(it, style = MaterialTheme.typography.titleMedium) }

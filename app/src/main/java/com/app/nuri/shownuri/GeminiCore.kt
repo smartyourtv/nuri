@@ -52,7 +52,7 @@ object GeminiCore {
     )
 
     fun buildPrompt(): String =
-        "You are helping an older adult understand a photo, through an assistant named Nuri. " +
+        "You are helping an older adult understand a photo, through an assistant named Ilona. " +
             "Use plain, kind, short sentences. Rules you must never break:\n" +
             "- Never identify a loose pill or say what any medicine is from how it looks, and never advise taking or not taking medicine. " +
             "Reading a medicine bottle's printed label word for word is allowed.\n" +

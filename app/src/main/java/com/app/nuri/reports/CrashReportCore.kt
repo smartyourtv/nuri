@@ -97,9 +97,9 @@ data class CrashReport(
 
         /** Plain-language summary lines — the only wording source. */
         fun crashSummary(): String =
-            "Nuri stopped unexpectedly. This report was saved so the problem can be found and fixed."
+            "Ilona stopped unexpectedly. This report was saved so the problem can be found and fixed."
         fun errorSummary(source: String, exceptionSimpleName: String? = null): String =
-            "Something in Nuri went wrong, but Nuri kept running. (Where: $source.)" +
+            "Something in Ilona went wrong, but Ilona kept running. (Where: $source.)" +
                 // v0.3.1: name the underlying error type in the summary
                 // itself (the full class + stack are in the report body),
                 // so even the list view — or a screenshot of it — is
@@ -108,9 +108,9 @@ data class CrashReport(
                     ?.let { " (Error type: $it.)" } ?: "")
         fun repairSummary(what: String, status: RepairStatus): String = when (status) {
             RepairStatus.REPAIRED ->
-                "Nuri found a problem in its own saved information and fixed it. ($what.)"
+                "Ilona found a problem in its own saved information and fixed it. ($what.)"
             RepairStatus.REPAIR_FAILED ->
-                "Nuri found a problem in its own saved information, but could not fix it. ($what.)"
+                "Ilona found a problem in its own saved information, but could not fix it. ($what.)"
         }
     }
 }
@@ -128,7 +128,7 @@ object ReportFormatter {
     private fun readable(epochMillis: Long): String =
         SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(epochMillis))
 
-    fun fileNameFor(epochMillis: Long): String = "Nuri-crash-${stamp(epochMillis)}.txt"
+    fun fileNameFor(epochMillis: Long): String = "Ilona-crash-${stamp(epochMillis)}.txt"
 
     /**
      * When two reports land in the same second, later ones get "-2", "-3"…
@@ -149,17 +149,17 @@ object ReportFormatter {
         val sb = StringBuilder()
         sb.appendLine(report.summaryLine)
         sb.appendLine()
-        sb.appendLine("Nuri crash & error report")
+        sb.appendLine("Ilona crash & error report")
         sb.appendLine("When: ${readable(report.epochMillis)}")
         sb.appendLine("Kind: ${report.kind.label}")
-        sb.appendLine("App: Nuri ${report.versionName} (version code ${report.versionCode}), ${report.flavor} edition")
+        sb.appendLine("App: Ilona ${report.versionName} (version code ${report.versionCode}), ${report.flavor} edition")
         sb.appendLine("Phone: ${report.deviceModel}, Android ${report.androidRelease} (API ${report.sdkInt})")
         sb.appendLine()
         if (report.exceptionClass != null) {
             sb.appendLine("What happened: ${report.exceptionClass}${report.exceptionMessage?.let { ": $it" } ?: ""}")
             sb.appendLine()
         }
-        sb.appendLine("How far Nuri got:")
+        sb.appendLine("How far Ilona got:")
         if (report.breadcrumbs.isEmpty()) {
             sb.appendLine("  (no steps were recorded)")
         } else {
@@ -199,7 +199,11 @@ class FileReportStore(private val dir: File) {
     }
 
     fun list(): List<StoredReport> {
-        val files = dir.listFiles { f -> f.isFile && f.name.startsWith("Nuri-crash-") && f.name.endsWith(".txt") }
+        // v0.3.3 rename: new reports are Ilona-crash-*, but reports written
+        // by earlier versions (Nuri-crash-*) already on the device must
+        // still list, read, and sort — both prefixes are ours.
+        val files = dir.listFiles { f -> f.isFile && f.name.endsWith(".txt") &&
+            (f.name.startsWith("Ilona-crash-") || f.name.startsWith("Nuri-crash-")) }
             ?: return emptyList()
         return files.map { f ->
             val summary = try {
@@ -225,7 +229,8 @@ class FileReportStore(private val dir: File) {
     companion object {
         const val MAX_REPORTS = 50
 
-        private val NAME_STAMP = Regex("""Nuri-crash-(\d{8})-(\d{6})(?:-\d+)?\.txt""")
+        // Both prefixes parse (see list()): legacy Nuri-crash-* + Ilona-crash-*.
+        private val NAME_STAMP = Regex("""(?:Ilona|Nuri)-crash-(\d{8})-(\d{6})(?:-\d+)?\.txt""")
 
         fun epochFromName(name: String): Long? {
             val m = NAME_STAMP.matchEntire(name) ?: return null

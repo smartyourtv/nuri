@@ -24,7 +24,7 @@ class NuriApplication : Application() {
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
         CrashReports.install(base)
-        CrashReports.breadcrumbs.mark("Nuri started")
+        CrashReports.breadcrumbs.mark("Ilona started")
     }
 
     override fun onCreate() {

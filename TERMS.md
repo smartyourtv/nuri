@@ -1,8 +1,8 @@
-# Nuri — Terms of Use (free, "as is")
+# Ilona — Terms of Use (free, "as is")
 
 ## In plain words
 
-Nuri is free. It is offered as it is, with no promises. It is a
+Ilona is free. It is offered as it is, with no promises. It is a
 helper, not a medical device. If it stops working, or gets something
 wrong, the maker is not liable for damages — to the fullest extent
 the law allows. Full terms below; they do not take away any rights
@@ -10,8 +10,8 @@ the law says cannot be taken away.
 
 ## Terms
 
-1. **What Nuri is.** Nuri is a free software application for Android
-   provided by Shawn Alan Kiper ("the maker"). Nuri is free software
+1. **What Ilona is.** Ilona is a free software application for Android
+   provided by Shawn Alan Kiper ("the maker"). Ilona is free software
    under the GNU General Public License, version 3 or later, with an
    additional linking permission for the Google ML Kit and Google
    Play services libraries (see the `LICENSE` and
@@ -24,14 +24,14 @@ the law says cannot be taken away.
    WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
    ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
    PARTICULAR PURPOSE, ACCURACY, RELIABILITY, AND NON-INFRINGEMENT.
-   The maker does not warrant that Nuri will work without
+   The maker does not warrant that Ilona will work without
    interruption or error, that reminders will always fire, or that
-   any information Nuri displays is correct. (The GPL's own
+   any information Ilona displays is correct. (The GPL's own
    no-warranty notice, GPL §§15–16, also applies to the source.)
 
-3. **Not a medical device; not emergency services.** Nuri is not a
+3. **Not a medical device; not emergency services.** Ilona is not a
    medical device, does not provide medical advice, and is not a
-   substitute for professional care or for emergency services. Nuri
+   substitute for professional care or for emergency services. Ilona
    never contacts emergency services by itself. In an emergency,
    call 911 (or your local emergency number). See the Safety
    information in the app for the full statement.
@@ -46,14 +46,14 @@ the law says cannot be taken away.
    NURI — WHICH IS ZERO.
 
 5. **Your responsibilities.** You are responsible for: the accuracy
-   of schedules, names, and other information entered into Nuri;
+   of schedules, names, and other information entered into Ilona;
    keeping your phone charged, locked, and in working order; and
-   making sure that anyone whose information is entered into Nuri
+   making sure that anyone whose information is entered into Ilona
    (including a caregiver's or a care receiver's) knows it is there
-   and agrees to it. Do not rely on Nuri as the only safeguard for
+   and agrees to it. Do not rely on Ilona as the only safeguard for
    anyone's health or safety.
 
-6. **Third-party services.** Nuri includes Google ML Kit, which is
+6. **Third-party services.** Ilona includes Google ML Kit, which is
    provided under Google's terms and sends Google technical
    performance metrics as described in the Privacy Policy. The
    maker is not responsible for Google's services or practices.

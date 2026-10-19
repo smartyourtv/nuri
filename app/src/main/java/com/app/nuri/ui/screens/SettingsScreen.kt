@@ -113,39 +113,39 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         // Family & help quick links (v0.3.1) — first block on this screen.
         Text("Family & help", style = MaterialTheme.typography.titleLarge)
         Button(onClick = { showDashboard = true }, modifier = Modifier.fillMaxWidth()) { Text("Family summary (for the caregiver)", style = MaterialTheme.typography.labelLarge) }
-        Button(onClick = { showDiary = true }, modifier = Modifier.fillMaxWidth()) { Text("See the help diary (what Nuri helped with)", style = MaterialTheme.typography.labelLarge) }
+        Button(onClick = { showDiary = true }, modifier = Modifier.fillMaxWidth()) { Text("See the help diary (what Ilona helped with)", style = MaterialTheme.typography.labelLarge) }
         Button(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) { Text("Licenses & attributions", style = MaterialTheme.typography.labelLarge) }
         Text("Family names, the safe word, medicines, and snapshots are set up in the 'Family & help setup' section further down this screen.")
         // Show Nuri read-aloud (v0.3.2): the interim platform voice.
         // Default ON in the store — the Show Nuri promise depends on it.
         val readAloud by repo.showNuriReadAloud.collectAsState(initial = true)
         Text("Reading aloud", style = MaterialTheme.typography.titleLarge)
-        Text("When Show Nuri looks at a photo, it reads its answer aloud in the phone's built-in voice, so it can be heard as well as read. Turn this off for quiet answers — the 'Listen again' button on the Show Nuri screen still works either way.")
+        Text("When Show Ilona looks at a photo, it reads its answer aloud in the phone's built-in voice, so it can be heard as well as read. Turn this off for quiet answers — the 'Listen again' button on the Show Ilona screen still works either way.")
         Switch(
             checked = readAloud,
             onCheckedChange = { checked -> scope.launch { repo.setShowNuriReadAloud(checked) } }
         )
         Text(if (readAloud) "Reading aloud is on." else "Reading aloud is off. Answers will appear as words on the screen.")
-        Text("How much feeling Nuri shows", style = MaterialTheme.typography.titleLarge)
-        Text("This changes how warm and lively Nuri sounds. It never changes Nuri's voice — it is always the same voice.")
+        Text("How much feeling Ilona shows", style = MaterialTheme.typography.titleLarge)
+        Text("This changes how warm and lively Ilona sounds. It never changes Ilona's voice — it is always the same voice.")
         Box {
             Button(onClick = { menuOpen = true }, modifier = Modifier.fillMaxWidth()) { Text("${effectiveEmotion.label} — tap to change") }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                 NuriSettings.EmotionLevel.values().forEach { level ->
                     DropdownMenuItem(
                         text = { Text("${level.ordinal + 1}. ${level.label}") },
-                        onClick = { scope.launch { repo.setEmotionLevel(level) }; feedback = "Done — Nuri will sound ${level.label.lowercase()} from now on."; menuOpen = false }
+                        onClick = { scope.launch { repo.setEmotionLevel(level) }; feedback = "Done — Ilona will sound ${level.label.lowercase()} from now on."; menuOpen = false }
                     )
                 }
             }
         }
         Text(EmotionProsody.descriptionFor(effectiveEmotion))
         if (tier == NuriSettings.Tier.GUIDED && storedEmotion != effectiveEmotion) {
-            Text("For comfort, the Guided setup keeps feeling in the calm range, so Nuri is using ${effectiveEmotion.label} even though ${storedEmotion.label} was picked.")
+            Text("For comfort, the Guided setup keeps feeling in the calm range, so Ilona is using ${effectiveEmotion.label} even though ${storedEmotion.label} was picked.")
         }
         if (feedback.isNotEmpty()) Text(feedback, style = MaterialTheme.typography.titleMedium)
         Text("Games allowed here: ${if (effective.gamesAllowed) "yes" else "no"} (Guided setups never show games or tests).")
-        Text("Always listen ('Hey Nuri') and backup arrive on this screen with on-device testing — nothing here is pretending to work before it does. The family summary is at the top of this screen.")
+        Text("Always listen ('Hey Ilona') and backup arrive on this screen with on-device testing — nothing here is pretending to work before it does. The family summary is at the top of this screen.")
         // Self-update (brief SS10, Shawn 2026-10-16): opt-in for the public
         // flavor; always on for the private flavor / Managed setups. The
         // executor (scheduled check, verified download, PackageInstaller,
@@ -175,7 +175,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         val firstInstallMode by repo.firstInstallMode.collectAsState(initial = null)
         val consentSeen by repo.therapistConsentSeen.collectAsState(initial = false)
         if (com.app.nuri.setup.TherapistConsent.shouldShowSharingCard(firstInstallMode)) {
-            Text("What Nuri shares", style = MaterialTheme.typography.titleLarge)
+            Text("What Ilona shares", style = MaterialTheme.typography.titleLarge)
             Text(TherapistSharingText.WHAT_IS_SHARED)
             Text(
                 com.app.nuri.setup.TherapistConsent.statusText(
@@ -199,11 +199,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         // preview below is the real thing, not a picture of it.
         val appearanceTheme by repo.appearanceTheme.collectAsState(initial = AppearanceTheme.CLASSIC)
         val fontStep by repo.fontStep.collectAsState(initial = FontStep.EASY)
-        Text("How Nuri looks", style = MaterialTheme.typography.titleLarge)
+        Text("How Ilona looks", style = MaterialTheme.typography.titleLarge)
         Text("Make the words bigger, or change the colors. Every choice stays easy to read.")
         Surface(color = Color(appearanceTheme.backgroundHex)) {
             Text(
-                "This is how Nuri looks. The words you are reading are the real size.",
+                "This is how Ilona looks. The words you are reading are the real size.",
                 color = Color(appearanceTheme.bodyTextHex),
                 fontSize = (20 * fontStep.scale).sp,
                 lineHeight = (28 * fontStep.scale).sp,
@@ -228,14 +228,14 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         // information are recorded there too. Reports never leave this
         // phone unless the person using Nuri shares one.
         Text("Crash & error reports", style = MaterialTheme.typography.titleLarge)
-        Text("If something goes wrong, Nuri saves a report here and in the Downloads folder. Reports never leave this phone unless you share one.")
+        Text("If something goes wrong, Ilona saves a report here and in the Downloads folder. Reports never leave this phone unless you share one.")
         Button(onClick = { showReports = true }, modifier = Modifier.fillMaxWidth()) {
             Text("See crash & error reports")
         }
         // About Nuri (v0.3.2, legal checklist §5): the permanent safety
         // card + terms + privacy policy. Permanent means permanent —
         // nothing here can be removed or dismissed away.
-        Text("About Nuri", style = MaterialTheme.typography.titleLarge)
+        Text("About Ilona", style = MaterialTheme.typography.titleLarge)
         androidx.compose.material3.Card {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(SafetyInfoText.TITLE, style = MaterialTheme.typography.titleMedium)
@@ -252,7 +252,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }, modifier = Modifier.fillMaxWidth()) {
             Text("Privacy policy")
         }
-        Text("The privacy policy opens on the web. It explains, in plain words, what Nuri keeps on this phone and the one thing that can leave it — a photo you ask Nuri to identify, and only when a caregiver has added the free closer-look key.")
+        Text("The privacy policy opens on the web. It explains, in plain words, what Ilona keeps on this phone and the one thing that can leave it — a photo you ask Ilona to identify, and only when a caregiver has added the free closer-look key.")
         // v0.3.0 additions (Unstuck family setup, medicine schedule, setup
         // checklists, snapshots, diary, licenses) — appended section; the
         // cards above are unchanged (interface freeze).

@@ -76,7 +76,7 @@ object WelfareCheck {
         "Hello — I haven't heard from you in a while, and I wanted to check you're alright. Tap 'I'm okay' or just talk to me."
 
     fun alertDetail(): String =
-        "Nuri checked in after a long quiet stretch and got no answer within $RESPONSE_WINDOW_MINUTES minutes. This is a safety alert, not a medical judgment — a call or visit is the right next step."
+        "Ilona checked in after a long quiet stretch and got no answer within $RESPONSE_WINDOW_MINUTES minutes. This is a safety alert, not a medical judgment — a call or visit is the right next step."
 }
 
 /** Routine anchors (sweep #36): "after breakfast → a short walk" style

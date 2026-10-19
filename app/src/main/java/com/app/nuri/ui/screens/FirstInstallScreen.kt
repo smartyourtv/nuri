@@ -32,12 +32,12 @@ import com.app.nuri.config.NuriSettings
  */
 object TherapistSharingText {
     const val WHAT_IS_SHARED: String =
-        "Nuri shares only what was set up with the therapist: check-in summaries and safety alerts, " +
-        "with the people named during setup. Nuri does not share conversations word for word, and does not share anything with advertisers."
+        "Ilona shares only what was set up with the therapist: check-in summaries and safety alerts, " +
+        "with the people named during setup. Ilona does not share conversations word for word, and does not share anything with advertisers."
     const val ASK_ANYTIME: String =
-        "You can ask Nuri any time: 'What do you share?' Nuri will always answer with the list above."
+        "You can ask Ilona any time: 'What do you share?' Ilona will always answer with the list above."
     const val LEGAL_REP_NOTE: String =
-        "If the person using Nuri cannot give consent themselves, their legal representative gives and documents the consent instead."
+        "If the person using Ilona cannot give consent themselves, their legal representative gives and documents the consent instead."
 }
 
 @Composable
@@ -62,7 +62,7 @@ fun FirstInstallScreen(
     var pendingConfirm by remember { mutableStateOf<Pair<NuriSettings.FirstInstallMode, NuriSettings.AccessMode>?>(null) }
     var feedback by remember { mutableStateOf("") }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Welcome to Nuri", style = MaterialTheme.typography.headlineMedium)
+        Text("Welcome to Ilona", style = MaterialTheme.typography.headlineMedium)
         if (!safetyCardSeen) {
             Card {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -73,7 +73,7 @@ fun FirstInstallScreen(
             }
         }
         Text("Who is setting up this phone? Choose the one that fits. You can read each one first — nothing starts until you confirm.")
-        Button(onClick = { mode = NuriSettings.FirstInstallMode.INDEPENDENT }, modifier = Modifier.fillMaxWidth()) { Text("Just me — I am setting up my own Nuri") }
+        Button(onClick = { mode = NuriSettings.FirstInstallMode.INDEPENDENT }, modifier = Modifier.fillMaxWidth()) { Text("Just me — I am setting up my own Ilona") }
         Text("'Just me' is already the usual choice. No caregiver, no sharing, nothing leaves this phone.")
         Button(onClick = { mode = NuriSettings.FirstInstallMode.CAREGIVER }, modifier = Modifier.fillMaxWidth()) { Text("I am a family member or caregiver helping") }
         Text("You will choose whether you also see a gentle summary, and set up routines, contacts, and alerts.")
@@ -96,10 +96,10 @@ fun FirstInstallScreen(
                 var cgChain by remember { mutableStateOf(false) }
                 Text("Set up the help basics now — they can all be changed later in Settings.", style = MaterialTheme.typography.titleMedium)
                 androidx.compose.material3.OutlinedTextField(value = cgName, onValueChange = { cgName = it }, label = { Text("Your name (the caregiver)") }, modifier = Modifier.fillMaxWidth())
-                Text("When help is hard, Nuri offers to ask for a person by name." + (FlavorHooks.askNameOverride()?.let { " (This edition says 'ask $it'.)" } ?: " (Your name, as written above.)"))
+                Text("When help is hard, Ilona offers to ask for a person by name." + (FlavorHooks.askNameOverride()?.let { " (This edition says 'ask $it'.)" } ?: " (Your name, as written above.)"))
                 androidx.compose.material3.OutlinedTextField(value = cgWord, onValueChange = { cgWord = it }, label = { Text("Family safe word") }, modifier = Modifier.fillMaxWidth())
-                Text("A word only your family knows. On any 'emergency' call claiming to be family, Nuri asks whether the caller knew it — voice-copying scammers won't.")
-                Text("If they ask for a husband or wife who has passed, how should Nuri answer? The family chooses; Nuri never improvises.")
+                Text("A word only your family knows. On any 'emergency' call claiming to be family, Ilona asks whether the caller knew it — voice-copying scammers won't.")
+                Text("If they ask for a husband or wife who has passed, how should Ilona answer? The family chooses; Ilona never improvises.")
                 com.app.nuri.unstuck.SpouseResponseMode.values().forEach { m ->
                     Button(onClick = { cgSpouse = com.app.nuri.unstuck.SpouseResponse.toggle(cgSpouse, m) }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (m == cgSpouse) "${m.name.replace('_', ' ')} — chosen" else m.name.replace('_', ' '))
@@ -110,7 +110,7 @@ fun FirstInstallScreen(
                 androidx.compose.material3.OutlinedTextField(value = cgEmNumber, onValueChange = { cgEmNumber = it }, label = { Text("Emergency contact number") }, modifier = Modifier.fillMaxWidth())
                 androidx.compose.foundation.layout.Row {
                     androidx.compose.material3.Checkbox(checked = cgSealed, onCheckedChange = { cgSealed = it })
-                    Text("Sealed paper copy of their Google password, kept by you. (Their password — held on paper by family. Nuri never sees it.)")
+                    Text("Sealed paper copy of their Google password, kept by you. (Their password — held on paper by family. Ilona never sees it.)")
                 }
                 androidx.compose.foundation.layout.Row {
                     androidx.compose.material3.Checkbox(checked = cgChain, onCheckedChange = { cgChain = it })
@@ -124,12 +124,12 @@ fun FirstInstallScreen(
                 Button(onClick = {
                     onFamilySetup(cgName.trim(), cgWord.trim(), cgSpouse.name, cgEmName.trim(), cgEmNumber.trim(), cgSealed, cgChain)
                     pendingConfirm = NuriSettings.FirstInstallMode.CAREGIVER to NuriSettings.AccessMode.MANAGED
-                }, modifier = Modifier.fillMaxWidth()) { Text("I look after the settings — they just talk to Nuri") }
+                }, modifier = Modifier.fillMaxWidth()) { Text("I look after the settings — they just talk to Ilona") }
                 Text("Best when the person needs the simplest experience. You apply updates and changes for them.")
             }
             NuriSettings.FirstInstallMode.THERAPIST -> {
                 Card { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("What Nuri shares — please read this together first", style = MaterialTheme.typography.titleMedium)
+                    Text("What Ilona shares — please read this together first", style = MaterialTheme.typography.titleMedium)
                     Text(TherapistSharingText.WHAT_IS_SHARED)
                     Text(TherapistSharingText.ASK_ANYTIME)
                     Text(TherapistSharingText.LEGAL_REP_NOTE)
@@ -161,8 +161,8 @@ fun FirstInstallScreen(
         AlertDialog(
             onDismissRequest = { pendingConfirm = null },
             title = { Text("Is this right?") },
-            text = { Text("Set up Nuri this way? You can change who helps later in Settings, with the same kind of confirmation.") },
-            confirmButton = { TextButton(onClick = { onModeChosen(m, a); feedback = "Done — Nuri is set up. Welcome."; pendingConfirm = null }) { Text("Yes, set it up") } },
+            text = { Text("Set up Ilona this way? You can change who helps later in Settings, with the same kind of confirmation.") },
+            confirmButton = { TextButton(onClick = { onModeChosen(m, a); feedback = "Done — Ilona is set up. Welcome."; pendingConfirm = null }) { Text("Yes, set it up") } },
             dismissButton = { TextButton(onClick = { pendingConfirm = null }) { Text("Go back") } }
         )
     }

@@ -28,7 +28,7 @@ object SnapshotRotation {
         snapshots.sortedByDescending { it.epochMs }.drop(KEEP)
 
     fun describe(snapshots: List<SnapshotInfo>): String = when {
-        snapshots.isEmpty() -> "No snapshots yet. Snapshots are dated copies of Nuri's settings and records, kept in case something needs putting back."
+        snapshots.isEmpty() -> "No snapshots yet. Snapshots are dated copies of Ilona's settings and records, kept in case something needs putting back."
         else -> {
             val newest = snapshots.maxByOrNull { it.epochMs }!!
             "Keeping ${snapshots.size} of $KEEP snapshots. Snapshots are encrypted on this phone; restoring one is a caregiver-approved step."

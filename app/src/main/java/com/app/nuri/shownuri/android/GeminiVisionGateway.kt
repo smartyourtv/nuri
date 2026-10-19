@@ -34,7 +34,7 @@ class GeminiVisionGateway(private val apiKey: () -> String) {
         val key = apiKey().trim()
         if (key.isBlank()) return null
         val jpeg = downscaleToJpeg(imageBytes) ?: run {
-            CrashReports.recordProblem("Show Nuri cloud look", "cloud look failed (image could not be prepared)")
+            CrashReports.recordProblem("Show Ilona cloud look", "cloud look failed (image could not be prepared)")
             return null
         }
         val base64 = Base64.encodeToString(jpeg, Base64.NO_WRAP)
@@ -52,18 +52,18 @@ class GeminiVisionGateway(private val apiKey: () -> String) {
             connection.outputStream.use { it.write(requestJson.toByteArray(Charsets.UTF_8)) }
             status = connection.responseCode
             if (status != 200) {
-                CrashReports.recordProblem("Show Nuri cloud look", GeminiCore.failureLabel(status, null))
+                CrashReports.recordProblem("Show Ilona cloud look", GeminiCore.failureLabel(status, null))
                 null
             } else {
                 val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                 val answer = GeminiCore.parseResponse(body)
                 if (answer == null) {
-                    CrashReports.recordProblem("Show Nuri cloud look", "cloud look failed (unreadable reply)")
+                    CrashReports.recordProblem("Show Ilona cloud look", "cloud look failed (unreadable reply)")
                 }
                 answer
             }
         } catch (t: Throwable) {
-            CrashReports.recordProblem("Show Nuri cloud look", GeminiCore.failureLabel(status, t))
+            CrashReports.recordProblem("Show Ilona cloud look", GeminiCore.failureLabel(status, t))
             null
         }
     }

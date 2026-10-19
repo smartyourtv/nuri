@@ -39,7 +39,7 @@ object CaregiverMediatedRecovery {
         return when {
             !googleSignedIn -> Decision(
                 false,
-                "First, sign in with your Google account on this phone — that's how Nuri knows it's really you. Your caregiver can sit with you for that step; Nuri never sees or speaks the password.",
+                "First, sign in with your Google account on this phone — that's how Ilona knows it's really you. Your caregiver can sit with you for that step; Ilona never sees or speaks the password.",
             )
             !authorityApprovedFromOwnDevice -> Decision(
                 false,

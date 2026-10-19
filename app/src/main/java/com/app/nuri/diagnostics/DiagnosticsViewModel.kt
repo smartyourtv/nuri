@@ -29,7 +29,7 @@ class DiagnosticsViewModel : ViewModel() {
     private fun buildChecks(runBackupTest: Boolean): List<DiagnosticCheck> {
         val backupTest = if (runBackupTest) BackupCrypto.selfTest() else null
         return listOf(
-            DiagnosticCheck("App", "OK", "Nuri is running (v0.3.0 — Unstuck helpers, Show Nuri, safety actions)."),
+            DiagnosticCheck("App", "OK", "Ilona is running (v0.3.0 — Unstuck helpers, Show Ilona, safety actions)."),
             DiagnosticCheck("Voice", "Not built yet", NotBuiltTtsEngine().statusText()),
             DiagnosticCheck("Always listen", "Not built yet", alwaysListen.diagnosticsText()),
             DiagnosticCheck("Safety check-ins", "Built — offline design", OfflineSafetyHandlers.diagnosticsText()),
@@ -40,7 +40,7 @@ class DiagnosticsViewModel : ViewModel() {
             DiagnosticCheck("Email snapshot backup", "Not connected", GmailSnapshotBackup().statusText()),
             DiagnosticCheck("Google account helpers", "Not connected", GoogleDiagnostics.text()),
             DiagnosticCheck("Bluetooth speakers", "Not built yet", BtDiagnostics.text(BtSlotManager())),
-            DiagnosticCheck("Updates", "Not connected", "The full update machinery is built — nightly check, verified download, careful install, self-check afterwards — but no update address is set in this build yet, so it honestly reports that it cannot check. Updates never change how Nuri looks or sounds.")
+            DiagnosticCheck("Updates", "Not connected", "The full update machinery is built — nightly check, verified download, careful install, self-check afterwards — but no update address is set in this build yet, so it honestly reports that it cannot check. Updates never change how Ilona looks or sounds.")
         )
     }
     private val _state = MutableStateFlow(DiagnosticsState(checks = buildChecks(runBackupTest = false)))

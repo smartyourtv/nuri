@@ -104,7 +104,7 @@ class SelfUpdateExecutor(
 ) {
     companion object {
         /** The quiet after-note, verbatim from brief SS10. */
-        const val AFTER_NOTE_TEXT = "Nuri was updated, nothing looks different."
+        const val AFTER_NOTE_TEXT = "Ilona was updated, nothing looks different."
     }
 
     /** One scheduled background check-and-install pass. Blocking; call off the main thread. */
@@ -112,7 +112,7 @@ class SelfUpdateExecutor(
         if (!autoUpdateEnabled()) {
             return UpdateRunResult(
                 UpdateRunOutcome.SKIPPED_POLICY_OFF,
-                "Automatic updates are off for this Nuri, so nothing was checked."
+                "Automatic updates are off for this Ilona, so nothing was checked."
             )
         }
         val offer = feed.fetchOffer() ?: return UpdateRunResult(
@@ -121,7 +121,7 @@ class SelfUpdateExecutor(
         )
         val installed = inspector.installedVersionCode()
         if (!SelfUpdatePolicy.isNewer(installed, offer)) {
-            return UpdateRunResult(UpdateRunOutcome.UP_TO_DATE, "Nuri is up to date.")
+            return UpdateRunResult(UpdateRunOutcome.UP_TO_DATE, "Ilona is up to date.")
         }
         val downloaded = when (val r = downloader.download(offer, downloadDir)) {
             is DownloadResult.Failed -> return UpdateRunResult(UpdateRunOutcome.DOWNLOAD_FAILED, r.detail)
@@ -153,7 +153,7 @@ class SelfUpdateExecutor(
                 pendingStore.write(PendingUpdate(offer.versionCode, offer.versionName))
                 UpdateRunResult(
                     UpdateRunOutcome.INSTALL_STARTED,
-                    "Nuri ${offer.versionName} is being installed. Nuri will check itself when it starts again."
+                    "Ilona ${offer.versionName} is being installed. Ilona will check itself when it starts again."
                 )
             }
         }
@@ -171,7 +171,7 @@ class SelfUpdateExecutor(
         if (installed < pending.versionCode) {
             return PostUpdateResult(
                 PostUpdateOutcome.STILL_INSTALLING,
-                "An update to Nuri ${pending.versionName} was started but has not finished installing yet."
+                "An update to Ilona ${pending.versionName} was started but has not finished installing yet."
             )
         }
         val passed = selfTest.runSelfTest()
@@ -180,17 +180,17 @@ class SelfUpdateExecutor(
             alerts.afterNote(AFTER_NOTE_TEXT)
             PostUpdateResult(
                 PostUpdateOutcome.UPDATED_OK,
-                "Nuri was updated to version ${pending.versionName} and passed its self-check."
+                "Ilona was updated to version ${pending.versionName} and passed its self-check."
             )
         } else {
             alerts.caregiverAlert(
-                "Nuri update needs a look",
-                "Nuri was updated to version ${pending.versionName}, but its self-check did not pass. " +
+                "Ilona update needs a look",
+                "Ilona was updated to version ${pending.versionName}, but its self-check did not pass. " +
                     "Nothing was rolled back — a bad update is fixed with a newer version."
             )
             PostUpdateResult(
                 PostUpdateOutcome.UPDATED_SELF_TEST_FAILED,
-                "Nuri was updated to version ${pending.versionName}, but its self-check did not pass. The caregiver was told."
+                "Ilona was updated to version ${pending.versionName}, but its self-check did not pass. The caregiver was told."
             )
         }
     }

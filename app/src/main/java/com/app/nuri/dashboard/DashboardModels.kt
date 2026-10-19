@@ -37,7 +37,7 @@ class RealDashboardRepository(
 ) : DashboardRepository {
     override fun dataFor(tier: NuriSettings.Tier, accessMode: NuriSettings.AccessMode): DashboardData {
         if (accessMode == NuriSettings.AccessMode.INDEPENDENT || !ConfusionDiary.caregiverVisible(accessMode)) {
-            return DashboardData(noDataReason = "Nothing is shared. This Nuri is set to 'Just me', so there is no dashboard information at all.")
+            return DashboardData(noDataReason = "Nothing is shared. This Ilona is set to 'Just me', so there is no dashboard information at all.")
         }
         val todayCheckIn = checkIns.lastOrNull { it.dayKey == todayKey }
         val todayMeds = medConfirmations.filter { it.dayKey == todayKey }

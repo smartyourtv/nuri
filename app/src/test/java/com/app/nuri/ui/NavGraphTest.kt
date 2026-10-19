@@ -32,7 +32,7 @@ class NavGraphTest {
         val names = NavGraph.DESTINATIONS.map { it.name }
         listOf(
             "Unstuck help (two-path offer)",
-            "Show Nuri (camera read/identify)",
+            "Show Ilona (camera read/identify)",
             "Morning check-in",
             "Emergency call (armed)",
             "Puzzle game",

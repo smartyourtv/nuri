@@ -57,7 +57,7 @@ object MedRecords {
     fun refillLine(entry: MedScheduleEntry): String? {
         val days = entry.daysLeft ?: return entry.refillByText?.let { "Your ${entry.nameAsWritten} bottle says: $it." }
         return when {
-            days <= 0 -> "Your ${entry.nameAsWritten} may be out. Let's tell your caregiver or the pharmacy today — Nuri can't order refills."
+            days <= 0 -> "Your ${entry.nameAsWritten} may be out. Let's tell your caregiver or the pharmacy today — Ilona can't order refills."
             days <= 5 -> "You have about $days day${if (days == 1) "" else "s"} of ${entry.nameAsWritten} left. It's a good time to ask the pharmacy or your caregiver about a refill."
             else -> null
         }

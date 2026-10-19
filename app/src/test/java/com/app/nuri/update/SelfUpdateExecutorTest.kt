@@ -184,7 +184,7 @@ class SelfUpdateExecutorTest {
         r.pending.value = PendingUpdate(10, "1.10")
         val result = r.executor.checkAfterLaunch()
         assertEquals(PostUpdateOutcome.UPDATED_OK, result!!.outcome)
-        assertEquals(listOf("Nuri was updated, nothing looks different."), r.alerts.notes)
+        assertEquals(listOf("Ilona was updated, nothing looks different."), r.alerts.notes)
         assertTrue(r.alerts.caregiver.isEmpty())
         assertNull(r.pending.value)
     }

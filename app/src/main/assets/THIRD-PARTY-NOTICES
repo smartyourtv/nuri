@@ -1,25 +1,25 @@
 ================================================================================
-THIRD-PARTY NOTICES — Nuri (senior-care voice companion app)
+THIRD-PARTY NOTICES — Ilona (senior-care voice companion app)
 ================================================================================
 
-Nuri is free software: you can redistribute it and/or modify it under the
+Ilona is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
 version. See the LICENSE file in the repository root for the full text.
-(Nuri's own license and its ML Kit / Play services linking
+(Ilona's own license and its ML Kit / Play services linking
 exception: see LICENSE and LINKING-EXCEPTION.)
 
 This file lists the third-party software components incorporated into or
-distributed with Nuri, along with their licenses and the notices those
+distributed with Ilona, along with their licenses and the notices those
 licenses require. Full license texts follow in the LICENSE TEXTS section
 below.
 
 Prepared: 2026-10-13. Based on the license audit of the Scout Android
 codebase (~/workspace/goals/senior-ai-companion-app/briefs/license-audit.md),
-whose voice-engine and wake-word stack Nuri reuses.
+whose voice-engine and wake-word stack Ilona reuses.
 
 ================================================================================
-ADDENDUM — 2026-10-18: components ACTUALLY SHIPPED in the Nuri public build
+ADDENDUM — 2026-10-18: components ACTUALLY SHIPPED in the Ilona public build
 (v0.3.0 / vc3, APK inspected 2026-10-18). Read this first.
 ================================================================================
 
@@ -54,10 +54,10 @@ H.1  Google ML Kit — BUNDLED vision models and native pipelines
        duty. Processing happens on-device; input data and outputs are not
        sent to Google. ML Kit DOES send API performance/utilization
        metrics to Google, and the ML Kit Terms make the app developer
-       responsible for informing users of that processing — see the Nuri
+       responsible for informing users of that processing — see the Ilona
        privacy policy. (Entry B.7 below lists ML Kit versions from the
-       Scout audit — Translate / Language ID — which Nuri does not use;
-       this entry H.1 supersedes B.7 for the current Nuri build.)
+       Scout audit — Translate / Language ID — which Ilona does not use;
+       this entry H.1 supersedes B.7 for the current Ilona build.)
 
 H.2  Google Play services client libraries (transitive, via ML Kit)
      com.google.android.gms:play-services-basement, play-services-base,
@@ -117,15 +117,15 @@ A.2  espeak-ng-data — phonemizer data files
 
 A.3  sherpa-onnx v1.13.2 — corresponding source pointer (GPL compliance)
      The sherpa-onnx project's own source is Apache-2.0 (see Part B), but the
-     compiled binaries Nuri ships (see A.1) contain GPL-3.0-or-later code.
+     compiled binaries Ilona ships (see A.1) contain GPL-3.0-or-later code.
      Corresponding source for the shipped binaries:
        https://github.com/k2-fsa/sherpa-onnx (v1.13.2 tag / release archive)
 
-NOTE ON GPL SCOPE: Because the Nuri APK links GPL-3.0-or-later code into the
+NOTE ON GPL SCOPE: Because the Ilona APK links GPL-3.0-or-later code into the
 same distributable, the APK as a whole is conveyed under GPL-3.0-or-later,
-per GPL-3.0 section 5(c). This is why Nuri itself is licensed
+per GPL-3.0 section 5(c). This is why Ilona itself is licensed
 GPL-3.0-or-later. Recipients may obtain the Corresponding Source from the
-pointers above and from Nuri's own public source repository.
+pointers above and from Ilona's own public source repository.
 
 --------------------------------------------------------------------------------
 PART B — Components under Apache License 2.0
@@ -240,7 +240,7 @@ LICENSE TEXTS
 ================================================================================
 
 L1. GNU General Public License, version 3 (29 June 2007)
-    Applies to: Part A (espeak-ng, espeak-ng-data; and Nuri itself).
+    Applies to: Part A (espeak-ng, espeak-ng-data; and Ilona itself).
     ---
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
@@ -1847,4 +1847,4 @@ END OF THIRD-PARTY NOTICES
 Corresponding-source summary (for GPL-3.0 compliance, cf. Part A):
   - espeak-ng source:        https://github.com/espeak-ng/espeak-ng
   - sherpa-onnx v1.13.2:     https://github.com/k2-fsa/sherpa-onnx
-  - Nuri's own source:       [to be added — public repository URL once created]
+  - Ilona's own source:       [to be added — public repository URL once created]

@@ -119,7 +119,7 @@ private fun NuriRoot() {
 
     val safetyCardSeen by repo.safetyCardSeen.collectAsState(initial = false)
     when (setupCompleted) {
-        null -> Text("Nuri is getting ready…")
+        null -> Text("Ilona is getting ready…")
         false -> FirstInstallScreen(
             therapistConsentSeen = false,
             onTherapistConsentRead = { },

@@ -86,7 +86,7 @@ fun HomeScreen(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Nuri", style = MaterialTheme.typography.headlineLarge)
+        Text("Ilona", style = MaterialTheme.typography.headlineLarge)
         Text("$greeting. It's $todayLine.", style = MaterialTheme.typography.bodyLarge)
 
         // === HELP-FIRST BLOCK (v0.3.1) — the first, biggest things here.
@@ -102,7 +102,7 @@ fun HomeScreen(
             onClick = onOpenShowNuri,
             modifier = Modifier.fillMaxWidth().height(72.dp),
         ) {
-            Text("Show Nuri", style = MaterialTheme.typography.labelLarge)
+            Text("Show Ilona", style = MaterialTheme.typography.labelLarge)
         }
         Text("Take a picture of something and I'll read it or tell you what it is.")
 
@@ -118,9 +118,9 @@ fun HomeScreen(
             onClick = { if (typedText.isNotBlank()) { onAskTyped(typedText.trim()); typedText = "" } },
             modifier = Modifier.fillMaxWidth().height(72.dp),
         ) {
-            Text("Ask Nuri", style = MaterialTheme.typography.labelLarge)
+            Text("Ask Ilona", style = MaterialTheme.typography.labelLarge)
         }
-        Text("Type it in your own words — spelling and exact words don't matter. Nuri will read it back to check it understood.")
+        Text("Type it in your own words — spelling and exact words don't matter. Ilona will read it back to check it understood.")
         // === end help-first block; everything below is the v0.3.0 home, unchanged order.
 
         Button(onClick = { onOpenUnstuck(true) }, modifier = Modifier.fillMaxWidth()) {
@@ -214,6 +214,6 @@ fun HomeScreen(
 
         // Build identity (v0.3.1): always visible at the end of Home so any
         // screenshot or support conversation can name the exact build.
-        Text("Nuri version ${com.app.nuri.BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall)
+        Text("Ilona version ${com.app.nuri.BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall)
     }
 }
