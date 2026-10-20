@@ -23,9 +23,11 @@ import java.util.concurrent.Executors
  * deleted and reported, never used (self-repair law).
  *
  * Packs (sizes + hashes pinned from the verified artifacts — see
- * hidden_files/nuri-v040-model-eval.md):
- *  - TTS_KOKORO:   kokoro-int8-multi-lang-v1_0.tar.bz2 (sherpa-onnx
- *                  tts-models release) — the phone-proven pack.
+ * hidden_files/nuri-v040-model-eval.md; the Kokoro extracted-file
+ * pins were re-verified against the genuine v1.1 archive's tar
+ * listing in the v0.4.1 hotfix — see nuri-v041-status.md):
+ *  - TTS_KOKORO:   kokoro-multi-lang-v1_1.tar.bz2 (sherpa-onnx
+ *                  tts-models release) — full-precision pack.
  *  - STT_PARAKEET: Parakeet TDT 0.6B v2 int8, file by file from the
  *                  HuggingFace repo Scout ships, + silero VAD.
  *  - WAKE_KWS:     sherpa-onnx-kws-zipformer-gigaspeech-3.3M
@@ -62,6 +64,13 @@ class VoiceModelManager(context: Context) {
     val statuses: StateFlow<Map<Pack, PackStatus>> = _statuses
 
     init {
+        // Startup housekeeping (v0.4.1, self-repair law): before any
+        // download can be running, clear out what failed or finished
+        // downloads left behind — staging dirs, partial files, and
+        // archives of packs that are already READY — so downloaded
+        // files never just accumulate on the phone. Never touches a
+        // READY pack's extracted files. Logged per removal.
+        sweepStaleFiles()
         refresh()
     }
 
@@ -76,41 +85,63 @@ class VoiceModelManager(context: Context) {
     // Locations
     // ------------------------------------------------------------------
 
-    fun ttsDir(): File = File(rootDir, "kokoro-multi-lang-v1_1")
-    fun sttDir(): File = File(rootDir, "parakeet")
-    fun kwsDir(): File = File(rootDir, "kws-gigaspeech")
+    fun ttsDir(): File = File(rootDir, TTS_DIR_NAME)
+    fun sttDir(): File = File(rootDir, STT_DIR_NAME)
+    fun kwsDir(): File = File(rootDir, KWS_DIR_NAME)
 
     /** The Kokoro model file the engine should load, or null if the pack isn't complete. */
-    fun kokoroModelFile(): File? {
-        val dir = ttsDir()
-        val fp32 = File(dir, "model.onnx")
-        val int8 = File(dir, "model.int8.onnx")
-        return when {
-            // Laptop-parity default: the full-precision model (the
-            // model evaluation found it faster than int8 on CPU in
-            // every benchmark run, as well as fuller — see
-            // hidden_files/nuri-v040-model-eval.md).
-            fp32.exists() && fp32.length() == Pins.KOKORO_MODEL_FP32_BYTES -> fp32
-            int8.exists() && int8.length() == Pins.KOKORO_MODEL_INT8_BYTES -> int8
-            else -> null
+    fun kokoroModelFile(): File? = kokoroModelFileIn(ttsDir())
+
+    fun isReady(pack: Pack): Boolean = isReadyIn(rootDir, pack)
+
+    // ------------------------------------------------------------------
+    // Startup housekeeping — the stale-file sweep (v0.4.1)
+    // ------------------------------------------------------------------
+
+    /**
+     * Delete what downloads leave behind in the voice-models root:
+     * `*-staging` dirs, `*.partial` files, archives of packs that
+     * are already READY, and anything else that is not a current
+     * pack dir or a not-yet-ready pack's archive. Conservative by
+     * construction (direct children of the root only; READY packs'
+     * extracted files are never touched) and every removal is
+     * logged via CrashReports (self-repair law: conservative,
+     * verified, logged). A failed removal is logged and skipped —
+     * housekeeping can never break construction.
+     */
+    private fun sweepStaleFiles() {
+        val plan = try {
+            sweepPlan(rootDir)
+        } catch (t: Throwable) {
+            CrashReports.recordRepair(
+                "Voice models housekeeping",
+                "sweep planning failed: ${t.message ?: t.javaClass.simpleName}",
+                com.app.nuri.reports.RepairStatus.REPAIR_FAILED
+            )
+            return
+        }
+        for (stale in plan) {
+            try {
+                val bytes = treeBytes(stale)
+                check(stale.deleteRecursively()) { "could not delete ${stale.name}" }
+                check(!stale.exists()) { "${stale.name} still present after delete" }
+                CrashReports.recordRepair(
+                    "Voice models housekeeping",
+                    "removed stale ${stale.name} ($bytes bytes)",
+                    com.app.nuri.reports.RepairStatus.REPAIRED
+                )
+            } catch (t: Throwable) {
+                CrashReports.recordRepair(
+                    "Voice models housekeeping",
+                    "could not remove stale ${stale.name}: ${t.message ?: t.javaClass.simpleName}",
+                    com.app.nuri.reports.RepairStatus.REPAIR_FAILED
+                )
+            }
         }
     }
 
-    fun isReady(pack: Pack): Boolean = when (pack) {
-        Pack.TTS_KOKORO -> {
-            val dir = ttsDir()
-            kokoroModelFile() != null &&
-                File(dir, "voices.bin").length() == Pins.KOKORO_VOICES_BYTES &&
-                File(dir, "tokens.txt").exists() &&
-                File(dir, "espeak-ng-data").isDirectory
-        }
-        Pack.STT_PARAKEET -> Pins.PARAKEET_DOWNLOADS.all { spec ->
-            File(sttDir(), spec.localName).let { it.exists() && it.length() == spec.bytes }
-        }
-        Pack.WAKE_KWS -> Pins.KWS_FILES.all { (name, bytes) ->
-            File(kwsDir(), name).let { it.exists() && it.length() == bytes }
-        }
-    }
+    private fun treeBytes(file: File): Long =
+        if (file.isDirectory) file.walkTopDown().filter { it.isFile }.sumOf { it.length() } else file.length()
 
     fun refresh() {
         for (pack in Pack.values()) {
@@ -146,7 +177,7 @@ class VoiceModelManager(context: Context) {
                 Pack.TTS_KOKORO -> downloadArchivePack(
                     pack,
                     url = Pins.KOKORO_URL,
-                    archiveName = "kokoro-int8-multi-lang-v1_0.tar.bz2",
+                    archiveName = KOKORO_ARCHIVE_NAME,
                     expectedBytes = Pins.KOKORO_ARCHIVE_BYTES,
                     expectedSha256 = Pins.KOKORO_ARCHIVE_SHA256,
                     targetDir = ttsDir()
@@ -154,7 +185,7 @@ class VoiceModelManager(context: Context) {
                 Pack.WAKE_KWS -> downloadArchivePack(
                     pack,
                     url = Pins.KWS_URL,
-                    archiveName = "kws.tar.bz2",
+                    archiveName = KWS_ARCHIVE_NAME,
                     expectedBytes = Pins.KWS_ARCHIVE_BYTES,
                     expectedSha256 = Pins.KWS_ARCHIVE_SHA256,
                     targetDir = kwsDir()
@@ -340,25 +371,125 @@ class VoiceModelManager(context: Context) {
     }
 
     // ------------------------------------------------------------------
-    // Pins — verified artifact identities (hidden_files/nuri-v040-model-eval.md)
+    // Pure layout logic — readiness + sweep decisions over a root
+    // File, kept Android-free so JVM unit tests cover them directly.
+    // ------------------------------------------------------------------
+
+    companion object {
+        /** Extracted pack dir names under the voice-models root. */
+        const val TTS_DIR_NAME = "kokoro-multi-lang-v1_1"
+        const val STT_DIR_NAME = "parakeet"
+        const val KWS_DIR_NAME = "kws-gigaspeech"
+
+        /** Local archive file names (the downloaded .tar.bz2 files). */
+        const val KOKORO_ARCHIVE_NAME = "kokoro-multi-lang-v1_1.tar.bz2"
+        const val KWS_ARCHIVE_NAME = "kws.tar.bz2"
+
+        /** The extracted dir a pack lives in, or null for file-by-file packs. */
+        fun packDirName(pack: Pack): String = when (pack) {
+            Pack.TTS_KOKORO -> TTS_DIR_NAME
+            Pack.STT_PARAKEET -> STT_DIR_NAME
+            Pack.WAKE_KWS -> KWS_DIR_NAME
+        }
+
+        /** The local archive file name for archive packs, else null. */
+        fun archiveFileName(pack: Pack): String? = when (pack) {
+            Pack.TTS_KOKORO -> KOKORO_ARCHIVE_NAME
+            Pack.WAKE_KWS -> KWS_ARCHIVE_NAME
+            Pack.STT_PARAKEET -> null
+        }
+
+        /** The Kokoro model file to load from an extracted pack dir, or null. */
+        fun kokoroModelFileIn(dir: File): File? {
+            val fp32 = File(dir, "model.onnx")
+            val int8 = File(dir, "model.int8.onnx")
+            return when {
+                // Laptop-parity default: the full-precision model (the
+                // model evaluation found it faster than int8 on CPU in
+                // every benchmark run, as well as fuller — see
+                // hidden_files/nuri-v040-model-eval.md). The v1.1 pack
+                // ships fp32 only, so the int8 branch is a fallback
+                // for a pack that ever bundles both.
+                fp32.exists() && fp32.length() == Pins.KOKORO_MODEL_FP32_BYTES -> fp32
+                int8.exists() && int8.length() == Pins.KOKORO_MODEL_INT8_BYTES -> int8
+                else -> null
+            }
+        }
+
+        fun isReadyIn(rootDir: File, pack: Pack): Boolean = when (pack) {
+            Pack.TTS_KOKORO -> {
+                val dir = File(rootDir, TTS_DIR_NAME)
+                kokoroModelFileIn(dir) != null &&
+                    File(dir, "voices.bin").length() == Pins.KOKORO_VOICES_BYTES &&
+                    File(dir, "tokens.txt").exists() &&
+                    File(dir, "espeak-ng-data").isDirectory
+            }
+            Pack.STT_PARAKEET -> Pins.PARAKEET_DOWNLOADS.all { spec ->
+                File(File(rootDir, STT_DIR_NAME), spec.localName)
+                    .let { it.exists() && it.length() == spec.bytes }
+            }
+            Pack.WAKE_KWS -> Pins.KWS_FILES.all { (name, bytes) ->
+                File(File(rootDir, KWS_DIR_NAME), name)
+                    .let { it.exists() && it.length() == bytes }
+            }
+        }
+
+        /**
+         * The stale entries directly under [rootDir] that startup
+         * housekeeping should delete: every `*-staging` dir, every
+         * `*.partial` file, archives of packs that are already
+         * READY, and anything else that is neither a current pack
+         * dir nor a not-yet-ready pack's archive. READY packs'
+         * extracted files are never in the plan.
+         */
+        fun sweepPlan(rootDir: File): List<File> {
+            val children = rootDir.listFiles()?.toList() ?: return emptyList()
+            val keep = mutableSetOf<String>()
+            for (pack in Pack.values()) {
+                keep += packDirName(pack)
+                val archive = archiveFileName(pack)
+                if (archive != null && !isReadyIn(rootDir, pack)) keep += archive
+            }
+            return children.filter { child ->
+                child.name.endsWith("-staging") ||
+                    child.name.endsWith(".partial") ||
+                    child.name !in keep
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Pins — verified artifact identities (hidden_files/nuri-v040-model-eval.md;
+    // Kokoro extracted-file sizes re-verified in the v0.4.1 hotfix
+    // against the genuine v1.1 archive's tar listing)
     // ------------------------------------------------------------------
 
     object Pins {
         // Kokoro TTS — multi-lang v1.1 pack (eval verdict: the
         // FULL-PRECISION model is the laptop-parity choice — it
         // benchmarked faster than int8 on CPU in every run, as well
-        // as being the laptop's full-quality config; the pack
-        // bundles both precisions and the engine prefers the fp32
-        // model.onnx. af_heart = sid 3 in this pack (verified
-        // against the pack's voices list). All pins verified from
-        // the downloaded artifact itself (2026-10-19).
+        // as being the laptop's full-quality config; the engine
+        // prefers the fp32 model.onnx. af_heart = sid 3 in this
+        // pack (verified against the pack's voices list). Archive
+        // pins verified from the downloaded artifact itself
+        // (2026-10-19). Extracted-file pins RE-VERIFIED in the
+        // v0.4.1 hotfix against the genuine v1.1 archive's full
+        // tar listing — v0.4.0 shipped two wrong extracted sizes
+        // (crossed from the v1.0 pack the eval measured) and every
+        // verified download was then rejected as "incomplete":
+        //   model.onnx  325,631,784 B (was pinned 325,631,433)
+        //   voices.bin   53,790,720 B (was pinned  28,880,940;
+        //               v1.1 carries ~103 voices, v1.0 had 54)
+        // The v1.1 archive contains NO model.int8.onnx (fp32-only
+        // pack); KOKORO_MODEL_INT8_BYTES remains the v1.0 int8
+        // pack's size, kept for the fallback branch only.
         const val KOKORO_URL =
             "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_1.tar.bz2"
         const val KOKORO_ARCHIVE_BYTES = 364_816_464L
         const val KOKORO_ARCHIVE_SHA256 = "a3f4c73d043860e3fd2e5b06f36795eb81de0fc8e8de6df703245edddd87dbad"
-        const val KOKORO_MODEL_FP32_BYTES = 325_631_433L
+        const val KOKORO_MODEL_FP32_BYTES = 325_631_784L
         const val KOKORO_MODEL_INT8_BYTES = 114_203_756L
-        const val KOKORO_VOICES_BYTES = 28_880_940L
+        const val KOKORO_VOICES_BYTES = 53_790_720L
 
         data class FileSpec(val url: String, val localName: String, val bytes: Long, val sha256: String)
 
