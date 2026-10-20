@@ -8,19 +8,24 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
+import android.media.AudioRecordingConfiguration
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.app.nuri.config.NuriSettings
+import com.app.nuri.reports.RepairStatus
 import com.app.nuri.reports.android.CrashReports
 import com.app.nuri.repository.SettingsRepository
 import com.app.nuri.speech.EnergyVad
 import com.app.nuri.speech.KwsKeywords
 import com.app.nuri.speech.ListenSessionMachine
+import com.app.nuri.speech.MicStreamHealth
 import com.app.nuri.speech.RelativeEndpointer
 import com.app.nuri.speech.VoiceRuntime
 import com.app.nuri.tts.EmotionGate
@@ -84,6 +89,12 @@ class AlwaysListenService : Service() {
     private var sttAnnouncedMissing = false
     private var kwsRetryAtMs = 0L
     private var sttRetryAtMs = 0L
+
+    // Policy-silencing sample cache (v0.5.2 amendment) — only
+    // ever touched on the capture thread (the loop + the
+    // recorder-swap helpers it calls), so no synchronization.
+    private var silencedCache = false
+    private var silencedCacheAtMs = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -154,24 +165,22 @@ class AlwaysListenService : Service() {
             fail("the microphone could not be opened on this phone")
             return
         }
-        val recorder = try {
-            AudioRecord(
-                MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                sampleRate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                maxOf(minBuffer * 4, windowSamples * 8)
-            )
-        } catch (t: Throwable) {
-            CrashReports.recordError("AlwaysListenService:AudioRecord", t)
+        val bufferSize = maxOf(minBuffer * 4, windowSamples * 8)
+        val initial = createRecorder(
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            preferBuiltin = false, sampleRate, bufferSize
+        )
+        if (initial == null) {
             fail("the microphone could not be opened")
             return
         }
-        if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-            recorder.release()
-            fail("the microphone could not be opened")
-            return
-        }
+        // The live capture hardware. The silent-mic repair ladder
+        // (v0.5.2, MicStreamHealth) swaps it in place when the
+        // stream is digitally dead; capture-thread confined.
+        val hw = CaptureHardware(initial)
+        val health = MicStreamHealth()
+        val attemptedSteps = mutableListOf<MicStreamHealth.RepairStep>()
+        var micLabel = "not known yet"
 
         val vad = EnergyVad()
         val session = ListenSessionMachine()
@@ -187,10 +196,13 @@ class AlwaysListenService : Service() {
         var lastPackCheckMs = 0L
 
         try {
-            recorder.startRecording()
+            hw.recorder.startRecording()
+            micLabel = reportMicInput(hw)
             val buffer = ShortArray(windowSamples)
             while (running) {
-                val read = recorder.read(buffer, 0, buffer.size)
+                val readStartNs = System.nanoTime()
+                val read = hw.recorder.read(buffer, 0, buffer.size)
+                val readElapsedMs = (System.nanoTime() - readStartNs) / 1_000_000
                 if (read <= 0) {
                     Thread.sleep(20)
                     continue
@@ -215,12 +227,78 @@ class AlwaysListenService : Service() {
 
                 val now = System.currentTimeMillis()
 
+                // ---- Silent-mic self-repair (v0.5.2) ----
+                // The watchdog (MicStreamHealth) decides; this loop
+                // performs. Swaps happen between windows, on this
+                // thread, and only ever on a digitally dead stream —
+                // no real utterance or barge-in can be in flight on
+                // zeros. Outcomes are logged as repairs either way.
+                val directive = health.onWindow(
+                    rms, read, readElapsedMs, now,
+                    sampleClientSilenced(now, runCatching { hw.recorder.audioSessionId }.getOrDefault(-1))
+                )
+                // The episode's silenced-vs-dead classification,
+                // captured before any follow-up directives so the
+                // repair log below words it correctly.
+                val episodeSilenced = directive.silenced
+                if (directive.spinSuspected) Thread.sleep(SPIN_PACE_MS)
+                var healthAction = directive.action
+                while (healthAction is MicStreamHealth.Action.AttemptRepair) {
+                    attemptedSteps += healthAction.step
+                    healthAction = tryRepairSwap(healthAction.step, hw, health, now, sampleRate, bufferSize)
+                    micLabel = reportMicInput(hw)
+                }
+                when (healthAction) {
+                    is MicStreamHealth.Action.RepairConfirmed -> {
+                        CrashReports.recordRepair(
+                            "AlwaysListenService microphone",
+                            if (episodeSilenced) {
+                                "Another app was using the microphone in call mode, which muted " +
+                                    "Ilona's listening (Android silences the other recording), so Ilona " +
+                                    "repaired the sound path. Steps tried: " +
+                                    attemptedSteps.joinToString(", ") { repairStepName(it) } +
+                                    ". Sound is coming in again through $micLabel, live and no longer muted."
+                            } else {
+                                "The microphone was returning silence (digital zeros), so Ilona " +
+                                    "repaired the sound path. Steps tried: " +
+                                    attemptedSteps.joinToString(", ") { repairStepName(it) } +
+                                    ". Sound is coming in again through $micLabel."
+                            },
+                            RepairStatus.REPAIRED
+                        )
+                        attemptedSteps.clear()
+                    }
+                    MicStreamHealth.Action.RepairExhausted -> {
+                        CrashReports.recordRepair(
+                            "AlwaysListenService microphone",
+                            if (episodeSilenced) {
+                                "Ilona's listening is still muted because another app is using the " +
+                                    "microphone in call mode. Every repair step was tried (" +
+                                    attemptedSteps.joinToString(", ") { repairStepName(it) } +
+                                    "). Ilona keeps retrying on a slow cadence and will hear again " +
+                                    "when that app finishes; the voice health card says which state she is in."
+                            } else {
+                                "The microphone stayed silent after every repair step (" +
+                                    attemptedSteps.joinToString(", ") { repairStepName(it) } +
+                                    "). Listening continues on the last path; the voice health " +
+                                    "card shows the problem. Sound was last routed through $micLabel."
+                            },
+                            RepairStatus.REPAIR_FAILED
+                        )
+                        attemptedSteps.clear()
+                    }
+                    else -> Unit
+                }
+
                 // Pack readiness is re-checked a few times a minute so
                 // a finished download lights up without a restart.
                 if (now - lastPackCheckMs > 5_000) {
                     lastPackCheckMs = now
                     if (spotter == null && now >= kwsRetryAtMs) initSpotter()
                     if (recognizer == null && now >= sttRetryAtMs) initRecognizer()
+                    // The input route can change under us (headset
+                    // plugged/unplugged): keep the card's label true.
+                    micLabel = reportMicInput(hw)
                 }
 
                 // Session timeout.
@@ -326,9 +404,164 @@ class AlwaysListenService : Service() {
                 fail("listening stopped: ${t.message ?: "microphone error"}")
             }
         } finally {
-            runCatching { recorder.stop() }
-            runCatching { recorder.release() }
+            runCatching { hw.recorder.stop() }
+            runCatching { hw.recorder.release() }
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Silent-mic repair hardware (v0.5.2)
+    // ------------------------------------------------------------------
+
+    /** The live capture recorder + its current configuration. */
+    private class CaptureHardware(
+        var recorder: AudioRecord,
+        var source: Int = MediaRecorder.AudioSource.VOICE_RECOGNITION,
+        var preferBuiltin: Boolean = false
+    )
+
+    /**
+     * Create + initialize a recorder, or null (the failure is
+     * recorded here, exactly as the original creation did).
+     * [preferBuiltin] pins the phone's own microphone as the
+     * preferred input before the recorder starts.
+     */
+    private fun createRecorder(source: Int, preferBuiltin: Boolean, sampleRate: Int, bufferSize: Int): AudioRecord? {
+        val rec = try {
+            AudioRecord(source, sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize)
+        } catch (t: Throwable) {
+            CrashReports.recordError("AlwaysListenService:AudioRecord", t)
+            return null
+        }
+        if (rec.state != AudioRecord.STATE_INITIALIZED) {
+            rec.release()
+            return null
+        }
+        if (preferBuiltin) {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val builtin = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+                .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC }
+            if (builtin != null) runCatching { rec.setPreferredDevice(builtin) }
+        }
+        return rec
+    }
+
+    /**
+     * Perform one repair step against [hw]: swap in a fresh
+     * recorder with the step's configuration. Returns the NEXT
+     * action to process — [MicStreamHealth.Action.None] when the
+     * swap is in place and verification should run, or the
+     * follow-up the state machine dictates when the step could
+     * not even start (next step, or exhaustion).
+     */
+    private fun tryRepairSwap(
+        step: MicStreamHealth.RepairStep,
+        hw: CaptureHardware,
+        health: MicStreamHealth,
+        nowMs: Long,
+        sampleRate: Int,
+        bufferSize: Int
+    ): MicStreamHealth.Action {
+        val newSource = when (step) {
+            MicStreamHealth.RepairStep.RECREATE_SAME -> hw.source
+            MicStreamHealth.RepairStep.SOURCE_MIC -> MediaRecorder.AudioSource.MIC
+            MicStreamHealth.RepairStep.SOURCE_VOICE_COMMUNICATION -> MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            MicStreamHealth.RepairStep.PREFER_BUILTIN_MIC -> MediaRecorder.AudioSource.VOICE_RECOGNITION
+        }
+        val newPreferBuiltin = hw.preferBuiltin || step == MicStreamHealth.RepairStep.PREFER_BUILTIN_MIC
+        val fresh = createRecorder(newSource, newPreferBuiltin, sampleRate, bufferSize)
+            ?: return health.onRepairFailedToStart(nowMs).action
+        runCatching { hw.recorder.stop() }
+        runCatching { hw.recorder.release() }
+        hw.recorder = fresh
+        hw.source = newSource
+        hw.preferBuiltin = newPreferBuiltin
+        try {
+            fresh.startRecording()
+        } catch (t: Throwable) {
+            CrashReports.recordError("AlwaysListenService:AudioRecordStart", t)
+            return health.onRepairFailedToStart(nowMs).action
+        }
+        return MicStreamHealth.Action.None
+    }
+
+    /** Plain words for a repair step, for the repair log. */
+    private fun repairStepName(step: MicStreamHealth.RepairStep): String = when (step) {
+        MicStreamHealth.RepairStep.RECREATE_SAME -> "restarted the microphone"
+        MicStreamHealth.RepairStep.SOURCE_MIC -> "switched to the plain microphone path"
+        MicStreamHealth.RepairStep.SOURCE_VOICE_COMMUNICATION -> "switched to the call microphone path"
+        MicStreamHealth.RepairStep.PREFER_BUILTIN_MIC -> "preferred the phone's own microphone"
+    }
+
+    /**
+     * Read the live input route off [hw]'s recorder and publish
+     * it to the health card in plain words. Returns the device
+     * label (the loop keeps it for repair-log evidence).
+     */
+    private fun reportMicInput(hw: CaptureHardware): String {
+        val device = runCatching { hw.recorder.routedDevice }.getOrNull()
+        val label = micInputLabel(device)
+        VoiceRuntime.setMicInput(
+            label, micFixLabel(hw),
+            sampleClientSilenced(
+                System.currentTimeMillis(),
+                runCatching { hw.recorder.audioSessionId }.getOrDefault(-1)
+            )
+        )
+        return label
+    }
+
+    /**
+     * Whether Android currently reports THIS app's recording
+     * silenced by another app's call-mode capture — the proven
+     * root cause of the zeroed stream (dumpsys, 2026-10-20:
+     * a MODE_IN_COMMUNICATION capture by the Scout app flipped
+     * this session to "silenced"). Our own configuration is
+     * matched by audio session id — the public-API way, since
+     * getClientUid() is system-only. Sampled at most once a
+     * second; any platform failure reads as "not silenced" and
+     * the plain dead-stream repair path still applies.
+     */
+    private fun sampleClientSilenced(nowMs: Long, audioSessionId: Int): Boolean {
+        if (nowMs - silencedCacheAtMs >= SILENCED_SAMPLE_MS) {
+            silencedCacheAtMs = nowMs
+            silencedCache = runCatching {
+                if (audioSessionId < 0) {
+                    false
+                } else {
+                    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    audioManager.getActiveRecordingConfigurations().any { cfg: AudioRecordingConfiguration ->
+                        cfg.clientAudioSessionId == audioSessionId && cfg.isClientSilenced
+                    }
+                }
+            }.getOrDefault(false)
+        }
+        return silencedCache
+    }
+
+    private fun micInputLabel(device: AudioDeviceInfo?): String {
+        if (device == null) return "not known yet"
+        val name = device.productName?.toString()?.trim().orEmpty()
+        val named = if (name.isBlank()) "" else " — $name"
+        return when (device.type) {
+            AudioDeviceInfo.TYPE_BUILTIN_MIC -> "the phone's own microphone"
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "a Bluetooth microphone$named"
+            AudioDeviceInfo.TYPE_WIRED_HEADSET -> "a wired headset$named"
+            AudioDeviceInfo.TYPE_USB_DEVICE, AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_USB_ACCESSORY -> "a USB microphone$named"
+            else -> "an external microphone$named"
+        }
+    }
+
+    /** The "a fix is in effect" note for the card; null on the standard path. */
+    private fun micFixLabel(hw: CaptureHardware): String? = when {
+        hw.preferBuiltin && hw.source == MediaRecorder.AudioSource.VOICE_RECOGNITION ->
+            "Ilona is using the phone's own microphone to fix silent sound."
+        hw.source == MediaRecorder.AudioSource.MIC ->
+            "Ilona switched to the plain microphone path to fix silent sound."
+        hw.source == MediaRecorder.AudioSource.VOICE_COMMUNICATION ->
+            "Ilona switched to the call microphone path to fix silent sound."
+        else -> null
     }
 
     private fun newEndpointer(): RelativeEndpointer = RelativeEndpointer(
@@ -573,6 +806,12 @@ class AlwaysListenService : Service() {
     companion object {
         private const val CHANNEL_ID = "ilona_listening"
         private const val NOTIFICATION_ID = 4101
+
+        /** Anti-spin pacing (v0.5.2): brief pause per dead-spin window. */
+        private const val SPIN_PACE_MS = 15L
+
+        /** How often the policy-silenced state is re-sampled. */
+        private const val SILENCED_SAMPLE_MS = 1_000L
 
         /** Start the listener, if it isn't already running. */
         fun start(context: Context) {

@@ -35,6 +35,20 @@ data class VoiceRuntimeState(
     val speakingNow: Boolean = false,
     val routedDevice: String? = null,
     val routeVerified: Boolean = false,
+    /**
+     * The microphone input, in plain words ("the phone's own
+     * microphone", "a Bluetooth microphone — …"), written by the
+     * listen service on every recorder (re)creation (v0.5.2).
+     */
+    val micInputLabel: String? = null,
+    /** Set while a silent-mic repair path is in effect; null on the standard path. */
+    val micFixLabel: String? = null,
+    /**
+     * True while Android reports this app's recording silenced
+     * by another app's call-mode capture (v0.5.2 amendment) —
+     * picks the health card's wording for the silent state.
+     */
+    val micSilenced: Boolean = false,
     val lastFailure: String? = null,
     val failureCount: Int = 0
 )
@@ -84,6 +98,11 @@ object VoiceRuntime {
 
     fun setRoutedDevice(label: String, verified: Boolean) = update {
         it.copy(routedDevice = label, routeVerified = verified)
+    }
+
+    /** The live microphone input + repair-path note (v0.5.2), from the listen service. */
+    fun setMicInput(label: String, fixLabel: String?, silenced: Boolean = false) = update {
+        it.copy(micInputLabel = label, micFixLabel = fixLabel, micSilenced = silenced)
     }
 
     fun noteFailure(what: String) = update {

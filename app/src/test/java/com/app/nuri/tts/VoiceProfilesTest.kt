@@ -73,10 +73,29 @@ class VoiceProfilesTest {
                 assertTrue(speed in 0.6f..1.3f)
             }
         }
-        // Ilona profile: slower than natural, slower still on request.
+        // Ilona profile (v0.5.2): the natural rate, owner-picked by
+        // ear on 2026-10-20 (renders at 0.92 / 0.95 / 1.0 — he
+        // chose 1.0). Slower only on the person's explicit request.
         val normal = VoiceProfiles.speedFor(VoiceProfiles.JUNE, 1f, slowerSpeech = false)
         val slower = VoiceProfiles.speedFor(VoiceProfiles.JUNE, 1f, slowerSpeech = true)
-        assertTrue(normal < 1f)
+        assertEquals(1.0f, normal, 0.0001f)
+        assertEquals(0.92f, slower, 0.0001f)
         assertTrue(slower < normal)
+    }
+
+    @Test fun slowerSpeechAppliesExactlyOnceOnTheLivePath() {
+        // The live path (IlonaSpeaker.speakBlocking) composes
+        // hintsFor's RAW rate with speedFor — the TtsPipeline
+        // stacking question, settled in the v0.5.2 audit:
+        // EmotionProsody.buildRequest's own 0.92 bake is never on
+        // this path (buildRequest has no callers), so the toggle
+        // slows speech exactly once, never to ~0.85.
+        val hints = EmotionProsody.hintsFor(
+            com.app.nuri.config.NuriSettings.EmotionLevel.WARM,
+            com.app.nuri.config.NuriSettings.Tier.SUPPORTED
+        )
+        val live = VoiceProfiles.speedFor(VoiceProfiles.JUNE, hints.rateMultiplier, slowerSpeech = true)
+        assertEquals(1.0f * hints.rateMultiplier * 0.92f, live, 0.0001f)
+        assertTrue(live > 0.80f) // a double application would land at ~0.80 or below
     }
 }

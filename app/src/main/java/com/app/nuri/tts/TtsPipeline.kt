@@ -32,6 +32,16 @@ object EmotionProsody {
             NuriSettings.EmotionLevel.FULL_HEARTED -> ProsodyHints(1.0f, 1.0f, 1.0f, allowSurprise = true, allowLaughter = true)
         }
     }
+    /**
+     * Scaffold contract — currently UNREFERENCED (v0.5.2 audit,
+     * caller-traced): the live speech path (IlonaSpeaker) uses
+     * [hintsFor] directly. WARNING for any future caller: this
+     * bakes the slowerSpeech 0.92 into the request's rate, so the
+     * baked rate must NOT be passed on to VoiceProfiles.speedFor
+     * with slowerSpeech=true — that would apply the slowdown
+     * twice (~0.85). Either consume the baked rate as-is, or use
+     * hintsFor + speedFor like the live path does.
+     */
     fun buildRequest(text: String, voiceId: String, level: NuriSettings.EmotionLevel, tier: NuriSettings.Tier, slowerSpeech: Boolean): SpeakRequest {
         val hints = hintsFor(level, tier)
         // Bug-hunt fix (NU-1): store the EFFECTIVE (Guided-clamped) level in the

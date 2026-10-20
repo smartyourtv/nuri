@@ -17,6 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.app.nuri.speech.MicStreamHealth
 import com.app.nuri.speech.VoiceRuntime
 import com.app.nuri.tts.VoiceProfiles
 import com.app.nuri.tts.android.IlonaSpeaker
@@ -62,8 +63,10 @@ fun VoiceHealthCard() {
             if (runtime.serviceRunning) {
                 Text(
                     if (runtime.micLive) "Microphone: working — it can hear the room."
-                    else "Microphone: seems silent. Check nothing is covering it, or try speaking closer."
+                    else MicStreamHealth.silenceMessage(runtime.micSilenced)
                 )
+                Text("Microphone in use: ${runtime.micInputLabel ?: "not known yet"}.")
+                runtime.micFixLabel?.let { Text(it) }
                 Text("Room sound: ${roomSoundText(runtime.vadFloor)}. Sound moments heard: ${runtime.speechWindows}.")
                 Text("“Hey Ilona” heard ${runtime.wakeCount} time${if (runtime.wakeCount == 1) "" else "s"} since listening started.")
                 runtime.lastHeard?.let { Text("Last thing heard: “$it”") }

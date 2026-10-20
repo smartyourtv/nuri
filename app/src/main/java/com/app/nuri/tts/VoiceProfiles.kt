@@ -87,13 +87,23 @@ object VoiceProfiles {
     fun storedValue(voice: Voice): String = voice.sid.toString()
 
     /**
-     * Ilona's speech profile (brief §6: slower pace, clear
-     * enunciation), applied on top of ANY selected voice — the
-     * profile is the product's, the timbre is the person's choice.
-     * Kokoro speed: 1.0 is the voice's natural rate.
+     * Ilona's speech profile, applied on top of ANY selected
+     * voice — the profile is the product's, the timbre is the
+     * person's choice. Kokoro speed: 1.0 is the voice's natural
+     * rate.
+     *
+     * Profile base = 1.0 (v0.5.2): the owner auditioned offline
+     * renders of June's sample line at 0.92 / 0.95 / 1.0 on
+     * 2026-10-20 and picked the natural rate ("I like C") — the
+     * earlier 0.92 base read as a little unnatural on-device.
+     * The slowerSpeech accessibility multiplier (0.92f) stays:
+     * it is a person's explicit choice, applied exactly once,
+     * here — callers pass the RAW emotion hint rate, never a
+     * pre-slowed one (see the warning on EmotionProsody
+     * .buildRequest).
      */
     fun speedFor(voice: Voice, emotionRateMultiplier: Float, slowerSpeech: Boolean): Float {
-        val profile = 0.92f // Ilona pace: a touch slower than natural, for clarity.
+        val profile = 1.0f // Natural rate — owner-picked by ear, 2026-10-20.
         val slower = if (slowerSpeech) 0.92f else 1.0f
         return (profile * slower * emotionRateMultiplier).coerceIn(0.6f, 1.3f)
     }
