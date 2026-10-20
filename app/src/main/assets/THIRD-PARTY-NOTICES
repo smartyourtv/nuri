@@ -37,7 +37,7 @@ IN THE APK:
 
 DOWNLOADED AFTER INSTALL (never in the APK; each file is size- and
 SHA-256-pinned in the app and verified before use):
-  - Kokoro-82M — kokoro-multi-lang-v1_1.tar.bz2 from the sherpa-onnx
+  - Kokoro-82M — kokoro-multi-lang-v1_0.tar.bz2 from the sherpa-onnx
     tts-models release (B.2; the pack's espeak-ng-data is Part A).
     The full-precision model is the one used.
   - Parakeet TDT 0.6B v2 int8 + Silero VAD — E.1 (CC-BY-4.0) and C.2

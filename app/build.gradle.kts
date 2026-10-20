@@ -14,8 +14,8 @@ android {
         // Deliberately targets old phones; interface freeze starts here.
         minSdk = 29
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.5.0"
+        versionCode = 10
+        versionName = "0.5.1"
 
         // Phones only: the floor device is a Galaxy S10-class ARM phone.
         // Without this, ML Kit's bundled models ship native libraries for

@@ -39,6 +39,33 @@ class VoiceProfilesTest {
         assertTrue(VoiceProfiles.VOICES.all { it.sampleLine.isNotBlank() })
     }
 
+    @Test fun pickerSidsMatchTheV10PackSpeakerMap() {
+        // The kokoro-multi-lang-v1_0 pack's own id2speaker table,
+        // read byte-for-byte from the genuine archive's model.onnx
+        // metadata (2026-10-20, v0.5.1 hotfix): 0 af_alloy,
+        // 1 af_aoede, 2 af_bella, 3 af_heart, 4 af_jessica,
+        // 5 af_kore, 6 af_nicole, 7 af_nova, 8 af_river, 9 af_sarah,
+        // 10 af_sky, 11 am_adam, 12 am_echo, 13 am_eric, 14 am_fenrir,
+        // 15 am_liam, 16 am_michael, 17 am_onyx, 18 am_puck,
+        // 19 am_santa, 20 bf_alice, ... (54 speakers).
+        // The v1.1 pack's table is a DIFFERENT (Chinese-edition)
+        // map — 3 -> zf_001 there — which is why v0.5.1 pins the
+        // picker against THIS one.
+        val v10SpeakerMap = mapOf(
+            3 to "af_heart",
+            2 to "af_bella",
+            9 to "af_sarah",
+            11 to "am_adam",
+            15 to "am_liam",
+            16 to "am_michael",
+            17 to "am_onyx"
+        )
+        assertEquals(v10SpeakerMap.keys, VoiceProfiles.VOICES.map { it.sid }.toSet())
+        for (voice in VoiceProfiles.VOICES) {
+            assertEquals(v10SpeakerMap[voice.sid], voice.kokoroId)
+        }
+    }
+
     @Test fun speedStaysInsideTheSafeBand() {
         for (voice in VoiceProfiles.VOICES) {
             for (slower in listOf(false, true)) {

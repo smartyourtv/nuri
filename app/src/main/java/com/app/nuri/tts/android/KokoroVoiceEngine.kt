@@ -75,7 +75,11 @@ class KokoroVoiceEngine(context: Context, private val models: VoiceModelManager)
                             voices = File(dir, "voices.bin").absolutePath,
                             tokens = File(dir, "tokens.txt").absolutePath,
                             dataDir = File(dir, "espeak-ng-data").absolutePath,
-                            lang = "en"
+                            // v0.5.1: the lexicon + lang of the
+                            // by-ear-confirmed eval render, pinned
+                            // in KokoroEngineConfig (unit-tested).
+                            lexicon = KokoroEngineConfig.lexiconPathIn(dir),
+                            lang = KokoroEngineConfig.LANG
                         ),
                         numThreads = 2
                     ),

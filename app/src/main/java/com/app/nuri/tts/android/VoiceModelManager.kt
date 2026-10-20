@@ -17,17 +17,20 @@ import java.util.concurrent.Executors
 
 /**
  * VoiceModelManager — Ilona's voice models download AFTER install
- * (the Lifewave v1.1.0 pattern): the APK stays ~53 MB; the ~810 MB
+ * (the Lifewave v1.1.0 pattern): the APK stays ~53 MB; the ~1 GB
  * of models arrive once, over the family's Wi-Fi, each pinned by
  * size AND SHA-256 and verified before use. A bad download is
  * deleted and reported, never used (self-repair law).
  *
  * Packs (sizes + hashes pinned from the verified artifacts — see
- * hidden_files/nuri-v040-model-eval.md; the Kokoro extracted-file
- * pins were re-verified against the genuine v1.1 archive's tar
- * listing in the v0.4.1 hotfix — see nuri-v041-status.md):
- *  - TTS_KOKORO:   kokoro-multi-lang-v1_1.tar.bz2 (sherpa-onnx
+ * hidden_files/nuri-v040-model-eval.md, nuri-v041-status.md and
+ * nuri-v051-status.md):
+ *  - TTS_KOKORO:   kokoro-multi-lang-v1_0.tar.bz2 (sherpa-onnx
  *                  tts-models release) — full-precision pack.
+ *                  v0.4.0–v0.5.0 mistakenly fetched the v1_1 pack,
+ *                  whose speaker table is the Chinese edition (no
+ *                  af_heart/June in it at all) — the v0.5.1 hotfix
+ *                  restores the v1_0 pack the picker was built on.
  *  - STT_PARAKEET: Parakeet TDT 0.6B v2 int8, file by file from the
  *                  HuggingFace repo Scout ships, + silero VAD.
  *  - WAKE_KWS:     sherpa-onnx-kws-zipformer-gigaspeech-3.3M
@@ -377,12 +380,12 @@ class VoiceModelManager(context: Context) {
 
     companion object {
         /** Extracted pack dir names under the voice-models root. */
-        const val TTS_DIR_NAME = "kokoro-multi-lang-v1_1"
+        const val TTS_DIR_NAME = "kokoro-multi-lang-v1_0"
         const val STT_DIR_NAME = "parakeet"
         const val KWS_DIR_NAME = "kws-gigaspeech"
 
         /** Local archive file names (the downloaded .tar.bz2 files). */
-        const val KOKORO_ARCHIVE_NAME = "kokoro-multi-lang-v1_1.tar.bz2"
+        const val KOKORO_ARCHIVE_NAME = "kokoro-multi-lang-v1_0.tar.bz2"
         const val KWS_ARCHIVE_NAME = "kws.tar.bz2"
 
         /** The extracted dir a pack lives in, or null for file-by-file packs. */
@@ -407,7 +410,7 @@ class VoiceModelManager(context: Context) {
                 // Laptop-parity default: the full-precision model (the
                 // model evaluation found it faster than int8 on CPU in
                 // every benchmark run, as well as fuller — see
-                // hidden_files/nuri-v040-model-eval.md). The v1.1 pack
+                // hidden_files/nuri-v040-model-eval.md). The v1.0 pack
                 // ships fp32 only, so the int8 branch is a fallback
                 // for a pack that ever bundles both.
                 fp32.exists() && fp32.length() == Pins.KOKORO_MODEL_FP32_BYTES -> fp32
@@ -422,7 +425,11 @@ class VoiceModelManager(context: Context) {
                 kokoroModelFileIn(dir) != null &&
                     File(dir, "voices.bin").length() == Pins.KOKORO_VOICES_BYTES &&
                     File(dir, "tokens.txt").exists() &&
-                    File(dir, "espeak-ng-data").isDirectory
+                    File(dir, "espeak-ng-data").isDirectory &&
+                    // v0.5.1: the engine config names the pack's
+                    // lexicon files, so a pack missing them is not
+                    // READY (it would load wrong or not at all).
+                    KokoroEngineConfig.lexiconsPresentIn(dir)
             }
             Pack.STT_PARAKEET -> Pins.PARAKEET_DOWNLOADS.all { spec ->
                 File(File(rootDir, STT_DIR_NAME), spec.localName)
@@ -460,36 +467,57 @@ class VoiceModelManager(context: Context) {
 
     // ------------------------------------------------------------------
     // Pins — verified artifact identities (hidden_files/nuri-v040-model-eval.md;
-    // Kokoro extracted-file sizes re-verified in the v0.4.1 hotfix
-    // against the genuine v1.1 archive's tar listing)
+    // Kokoro pins re-based on the v1.0 pack in the v0.5.1 hotfix —
+    // see nuri-v051-status.md for the full evidence trail)
     // ------------------------------------------------------------------
 
     object Pins {
-        // Kokoro TTS — multi-lang v1.1 pack (eval verdict: the
-        // FULL-PRECISION model is the laptop-parity choice — it
-        // benchmarked faster than int8 on CPU in every run, as well
-        // as being the laptop's full-quality config; the engine
-        // prefers the fp32 model.onnx. af_heart = sid 3 in this
-        // pack (verified against the pack's voices list). Archive
-        // pins verified from the downloaded artifact itself
-        // (2026-10-19). Extracted-file pins RE-VERIFIED in the
-        // v0.4.1 hotfix against the genuine v1.1 archive's full
-        // tar listing — v0.4.0 shipped two wrong extracted sizes
-        // (crossed from the v1.0 pack the eval measured) and every
-        // verified download was then rejected as "incomplete":
-        //   model.onnx  325,631,784 B (was pinned 325,631,433)
-        //   voices.bin   53,790,720 B (was pinned  28,880,940;
-        //               v1.1 carries ~103 voices, v1.0 had 54)
-        // The v1.1 archive contains NO model.int8.onnx (fp32-only
-        // pack); KOKORO_MODEL_INT8_BYTES remains the v1.0 int8
-        // pack's size, kept for the fallback branch only.
+        // Kokoro TTS — multi-lang v1.0 pack, full precision (the
+        // eval verdict: fp32 benchmarked faster than int8 on CPU in
+        // every run and is the laptop's full-quality config; the
+        // engine prefers the fp32 model.onnx).
+        //
+        // WHY v1.0 AND NOT v1.1 (v0.5.1, root cause proven): the
+        // speaker table lives in each model.onnx's id2speaker
+        // metadata. Read byte-for-byte from the genuine archives:
+        //   v1.0: 0->af_alloy, 1->af_aoede, 2->af_bella,
+        //         3->af_heart (June), ..., 9->af_sarah, 11->am_adam,
+        //         15->am_liam, 16->am_michael, 17->am_onyx — the
+        //         full English set VoiceProfiles was built on.
+        //   v1.1: 0->af_maple, 1->af_sol, 2->bf_vale, 3->zf_001,
+        //         then ~100 Mandarin zf_/zm_ voices — the Chinese
+        //         edition. af_heart IS NOT IN IT. v0.4.0–v0.5.0
+        //         downloaded v1.1, so sid 3 spoke as zf_001 — the
+        //         accented stranger the owner reported. No engine
+        //         setting could have fixed that; the voice itself
+        //         was absent.
+        //
+        // Pins below are from the genuine v1.0 archive in hand
+        // (build-support/voice-eval): archive 349,906,910 B,
+        // SHA-256 c5f7e2d2… (also verified against the live release
+        // asset by streamed hash at ship time); extracted sizes
+        // from that archive's own extraction:
+        //   model.onnx  325,560,556 B
+        //   voices.bin   28,200,960 B (54 voices)
+        //   tokens.txt        687 B (existence-checked)
+        // The v1.0 archive contains NO model.int8.onnx (fp32-only);
+        // KOKORO_MODEL_INT8_BYTES is the v1.0 family's separate
+        // int8 archive's model size, kept for the fallback branch.
+        //
+        // History (kept so the next reader doesn't re-cross them):
+        // v0.4.0 shipped v1.0-eval extracted sizes against the v1.1
+        // download and every verified download was rejected as
+        // "incomplete"; v0.4.1 corrected the pins to v1.1's real
+        // sizes (325,631,784 / 53,790,720) — which made the WRONG
+        // pack install perfectly. The tests pin both directions:
+        // v1.0 layout READY, v1.1 layout NOT ready.
         const val KOKORO_URL =
-            "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_1.tar.bz2"
-        const val KOKORO_ARCHIVE_BYTES = 364_816_464L
-        const val KOKORO_ARCHIVE_SHA256 = "a3f4c73d043860e3fd2e5b06f36795eb81de0fc8e8de6df703245edddd87dbad"
-        const val KOKORO_MODEL_FP32_BYTES = 325_631_784L
+            "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2"
+        const val KOKORO_ARCHIVE_BYTES = 349_906_910L
+        const val KOKORO_ARCHIVE_SHA256 = "c5f7e2d2caf082bc1d20fb70334a61d99d20b484500aad32e7cf84c128ea3298"
+        const val KOKORO_MODEL_FP32_BYTES = 325_560_556L
         const val KOKORO_MODEL_INT8_BYTES = 114_203_756L
-        const val KOKORO_VOICES_BYTES = 53_790_720L
+        const val KOKORO_VOICES_BYTES = 28_200_960L
 
         data class FileSpec(val url: String, val localName: String, val bytes: Long, val sha256: String)
 
