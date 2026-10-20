@@ -27,6 +27,21 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Local fallback LAST (same NU-6 rule as pluginManagement
+        // above) AND content-scoped to the one module it exists for:
+        // commons-compress (voice model packs) is not fetchable from
+        // the remote repos in this sandbox. The content filter means
+        // this repo can never shadow any other module's resolution —
+        // an unscoped local repo changed the coroutines version on
+        // the test classpath during the v0.4.0 build and broke a
+        // pre-existing test; the scope is the structural fix.
+        val localRepo = java.io.File("/home/hatch/workspace/build-support/local-maven-repo")
+        if (localRepo.exists()) {
+            maven {
+                url = localRepo.toURI()
+                content { includeGroup("org.apache.commons") }
+            }
+        }
     }
 }
 

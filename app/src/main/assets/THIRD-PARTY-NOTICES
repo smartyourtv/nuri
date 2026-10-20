@@ -19,6 +19,37 @@ codebase (~/workspace/goals/senior-ai-companion-app/briefs/license-audit.md),
 whose voice-engine and wake-word stack Ilona reuses.
 
 ================================================================================
+ADDENDUM — 2026-10-19: the voice build (v0.4.0 / vc7). Read this first.
+================================================================================
+
+v0.4.0 adds Ilona's voice. What changed, verified from the shipped APK
+and the pinned download artifacts (sizes + SHA-256 in
+hidden_files/nuri-v040-model-eval.md and the app's VoiceModelManager):
+
+IN THE APK:
+  - sherpa-onnx v1.13.2 AAR (app/libs) — Part A (espeak-ng, GPL-3.0,
+    statically linked in the native libraries), A.3, B.1, C.1 (ONNX
+    Runtime), C.3 (Piper Phonemize) are now OPERATIVE.
+  - Apache Commons Compress 1.26.0 — B.5 is now OPERATIVE (used to
+    unpack the voice model downloads).
+  - June's emotion-sound bank: original generated audio (WAV) in
+    assets/emotion-bank/june/ — see C.4 for its production provenance.
+
+DOWNLOADED AFTER INSTALL (never in the APK; each file is size- and
+SHA-256-pinned in the app and verified before use):
+  - Kokoro-82M — kokoro-multi-lang-v1_1.tar.bz2 from the sherpa-onnx
+    tts-models release (B.2; the pack's espeak-ng-data is Part A).
+    The full-precision model is the one used.
+  - Parakeet TDT 0.6B v2 int8 + Silero VAD — E.1 (CC-BY-4.0) and C.2
+    (MIT) are now OPERATIVE.
+  - Wake-word model sherpa-onnx-kws-zipformer-gigaspeech-3.3M —
+    B.11 below.
+
+Everything the 2026-10-18 addendum (Part H) says about v0.3.0 remains
+true of that build; for v0.4.0 this addendum supersedes its
+"no sherpa-onnx / no Commons Compress" statements.
+
+================================================================================
 ADDENDUM — 2026-10-18: components ACTUALLY SHIPPED in the Ilona public build
 (v0.3.0 / vc3, APK inspected 2026-10-18). Read this first.
 ================================================================================
@@ -169,6 +200,15 @@ B.9  MediaPipe tasks-text 0.10.29 (Google)
 B.10 Kotlin standard library 1.9.0 / Android Gradle Plugin 8.12.3 (JetBrains/Google)
      https://kotlinlang.org/ — Copyright JetBrains s.r.o. and contributors.
 
+B.11 Wake-word model — sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01
+     (k2-fsa / sherpa-onnx project; downloaded after install, see the
+     2026-10-19 addendum). License: Apache License 2.0, as distributed
+     by the sherpa-onnx project. The model was trained on the
+     GigaSpeech corpus (https://github.com/SpeechColab/GigaSpeech,
+     CC-BY-4.0). Ilona's wake phrase "hey ilona" is a keyword line
+     composed from the model's own BPE vocabulary (its bpe.model) —
+     a configuration of the model, not a modification of it.
+
 --------------------------------------------------------------------------------
 PART C — Components under the MIT License
 --------------------------------------------------------------------------------
@@ -182,6 +222,17 @@ C.2  Silero VAD model — silero_vad.onnx (snakers4 / Silero Team)
 
 C.3  Piper Phonemize (embedded in sherpa-onnx binaries; sherpa-onnx fork)
      https://github.com/k2-fsa/sherpa-onnx (third-party/piper-phonemize)
+
+C.4  Chatterbox (Resemble AI) — BUILD-TIME production tool only.
+     https://github.com/resemble-ai/chatterbox — MIT License,
+     Copyright (c) Resemble AI.
+     No Chatterbox code or weights ship in Ilona. Chatterbox-Turbo
+     was used at build time to GENERATE the original emotion-sound
+     performances in June's bank (assets/emotion-bank/june/),
+     conditioned on a Kokoro af_heart reference so the laughs,
+     chuckles, sighs, and breaths are in June's voice. The bank
+     files are original generated audio produced for Ilona; this
+     entry records their provenance.
 
 --------------------------------------------------------------------------------
 PART D — Components under BSD 2-Clause License

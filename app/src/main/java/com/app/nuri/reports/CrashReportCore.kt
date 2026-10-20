@@ -116,8 +116,9 @@ data class CrashReport(
 }
 
 /**
- * The file format, defined once: name `Nuri-crash-<yyyyMMdd-HHmmss>.txt`
- * (local time — the standing rule's pattern), contents with the
+ * The file format, defined once: name `Ilona-crash-<yyyyMMdd-HHmmss>.txt`
+ * (local time — the standing rule's pattern; pre-rename reports used the
+ * `Nuri-crash-` prefix and are still listed), contents with the
  * plain-language summary as the first line.
  */
 object ReportFormatter {
@@ -212,7 +213,7 @@ class FileReportStore(private val dir: File) {
                 "(this report could not be read)"
             }
             StoredReport(f, summary, epochFromName(f.name) ?: f.lastModified())
-        }.sortedByDescending { it.epochMillis }
+        }.sortedWith(REPORT_ORDER)
     }
 
     fun read(file: File): String = file.readText()
@@ -230,7 +231,25 @@ class FileReportStore(private val dir: File) {
         const val MAX_REPORTS = 50
 
         // Both prefixes parse (see list()): legacy Nuri-crash-* + Ilona-crash-*.
-        private val NAME_STAMP = Regex("""(?:Ilona|Nuri)-crash-(\d{8})-(\d{6})(?:-\d+)?\.txt""")
+        private val NAME_STAMP = Regex("""(?:Ilona|Nuri)-crash-(\d{8})-(\d{6})(?:-(\d+))?\.txt""")
+
+        /**
+         * Newest-first order for the report list AND for retention pruning.
+         *
+         * Laptop lesson (ThinkPad crash_report.py, 2026-10-18): sorting on
+         * the seconds-only filename stamp alone leaves same-second reports
+         * in arbitrary (listdir) order — retention could then delete a
+         * newer report while keeping an older one. The stamp stays the
+         * primary key (it is the report's own recorded time, immune to
+         * file-copy mtime changes), and ties break by true file mtime,
+         * then by the same-second collision suffix ("-2" was written
+         * after the unsuffixed name), then by name for determinism.
+         */
+        val REPORT_ORDER: Comparator<StoredReport> =
+            compareByDescending<StoredReport> { it.epochMillis }
+                .thenByDescending { it.file.lastModified() }
+                .thenByDescending { suffixFromName(it.file.name) }
+                .thenByDescending { it.file.name }
 
         fun epochFromName(name: String): Long? {
             val m = NAME_STAMP.matchEntire(name) ?: return null
@@ -239,6 +258,12 @@ class FileReportStore(private val dir: File) {
             } catch (_: Exception) {
                 null
             }
+        }
+
+        /** The same-second collision suffix ("-2" → 2); 0 when absent/unparseable. */
+        fun suffixFromName(name: String): Int {
+            val m = NAME_STAMP.matchEntire(name) ?: return 0
+            return m.groupValues[3].toIntOrNull() ?: 0
         }
     }
 }

@@ -14,8 +14,8 @@ android {
         // Deliberately targets old phones; interface freeze starts here.
         minSdk = 29
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.3.3"
+        versionCode = 7
+        versionName = "0.4.0"
 
         // Phones only: the floor device is a Galaxy S10-class ARM phone.
         // Without this, ML Kit's bundled models ship native libraries for
@@ -129,9 +129,15 @@ dependencies {
     implementation(libs.mlkit.text.recognition)
     implementation(libs.mlkit.image.labeling)
     implementation(libs.mlkit.barcode.scanning)
-    // NOTE: sherpa-onnx AAR (app/libs/, Scout pattern) is added when the TTS
-    // engine lands with the gated voice work — see SCAFFOLD.md. Not copied
-    // into the scaffold: 56 MB native lib, and the voice build is gated.
+    // Voice (v0.4.0): sherpa-onnx AAR (app/libs/, the phone Scout
+    // artifact, version-pinned 1.13.2 — ONE pinned version; the
+    // Lifewave 1.13.8 skew lesson is that the version is recorded,
+    // never drifted). Its native libs are restricted to ARM by the
+    // abiFilters above. Voice MODELS are NOT in the APK — they
+    // download after install, hash-verified (VoiceModelManager).
+    implementation(files("libs/sherpa-onnx-1.13.2.aar"))
+    // Tar/bzip2 for the model packs (same version Scout ships).
+    implementation(libs.commons.compress)
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)
 }

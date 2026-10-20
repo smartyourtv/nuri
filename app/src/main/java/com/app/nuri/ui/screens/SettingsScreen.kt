@@ -116,18 +116,21 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Button(onClick = { showDiary = true }, modifier = Modifier.fillMaxWidth()) { Text("See the help diary (what Ilona helped with)", style = MaterialTheme.typography.labelLarge) }
         Button(onClick = { showLicenses = true }, modifier = Modifier.fillMaxWidth()) { Text("Licenses & attributions", style = MaterialTheme.typography.labelLarge) }
         Text("Family names, the safe word, medicines, and snapshots are set up in the 'Family & help setup' section further down this screen.")
-        // Show Nuri read-aloud (v0.3.2): the interim platform voice.
-        // Default ON in the store — the Show Nuri promise depends on it.
+        // Show Ilona read-aloud: v0.3.2 shipped the interim platform
+        // voice; v0.4.0 routes it through the speaker seam — Ilona's
+        // own voice when it's downloaded, the phone's built-in voice
+        // until then (the Voice section below says which, honestly).
+        // Default ON in the store — the Show Ilona promise depends on it.
         val readAloud by repo.showNuriReadAloud.collectAsState(initial = true)
         Text("Reading aloud", style = MaterialTheme.typography.titleLarge)
-        Text("When Show Ilona looks at a photo, it reads its answer aloud in the phone's built-in voice, so it can be heard as well as read. Turn this off for quiet answers — the 'Listen again' button on the Show Ilona screen still works either way.")
+        Text("When Show Ilona looks at a photo, it reads its answer aloud in Ilona's voice, so it can be heard as well as read. Until her own voice has downloaded (see “Ilona's voice” below), the phone's built-in voice reads for her. Turn this off for quiet answers — the 'Listen again' button on the Show Ilona screen still works either way.")
         Switch(
             checked = readAloud,
             onCheckedChange = { checked -> scope.launch { repo.setShowNuriReadAloud(checked) } }
         )
         Text(if (readAloud) "Reading aloud is on." else "Reading aloud is off. Answers will appear as words on the screen.")
         Text("How much feeling Ilona shows", style = MaterialTheme.typography.titleLarge)
-        Text("This changes how warm and lively Ilona sounds. It never changes Ilona's voice — it is always the same voice.")
+        Text("This changes how warm and lively Ilona sounds — including whether she chuckles or laughs out loud. Her voice itself is picked in the “Ilona's voice” section just below, and once picked it never changes on its own.")
         Box {
             Button(onClick = { menuOpen = true }, modifier = Modifier.fillMaxWidth()) { Text("${effectiveEmotion.label} — tap to change") }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
@@ -145,7 +148,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
         if (feedback.isNotEmpty()) Text(feedback, style = MaterialTheme.typography.titleMedium)
         Text("Games allowed here: ${if (effective.gamesAllowed) "yes" else "no"} (Guided setups never show games or tests).")
-        Text("Always listen ('Hey Ilona') and backup arrive on this screen with on-device testing — nothing here is pretending to work before it does. The family summary is at the top of this screen.")
+        // Voice (v0.4.0): her voice picker + the one-time model download
+        // + the "Hey Ilona" listening switch. Additive section — every
+        // block above and below is unchanged (interface freeze).
+        VoiceSettingsSection(repo = repo)
         // Self-update (brief SS10, Shawn 2026-10-16): opt-in for the public
         // flavor; always on for the private flavor / Managed setups. The
         // executor (scheduled check, verified download, PackageInstaller,
@@ -252,7 +258,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }, modifier = Modifier.fillMaxWidth()) {
             Text("Privacy policy")
         }
-        Text("The privacy policy opens on the web. It explains, in plain words, what Ilona keeps on this phone and the one thing that can leave it — a photo you ask Ilona to identify, and only when a caregiver has added the free closer-look key.")
+        Text("The privacy policy opens on the web. It explains, in plain words, what Ilona keeps on this phone, how her listening works (on this phone only — your voice is never saved or sent anywhere), and the one thing that can leave it — a photo you ask Ilona to identify, and only when a caregiver has added the free closer-look key.")
         // v0.3.0 additions (Unstuck family setup, medicine schedule, setup
         // checklists, snapshots, diary, licenses) — appended section; the
         // cards above are unchanged (interface freeze).

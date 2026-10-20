@@ -1,6 +1,8 @@
 # Ilona Privacy Policy
 
-**Last updated: October 18, 2026**
+**Last updated: October 19, 2026** (version 0.4.0 added Ilona's voice
+and listening — see "Ilona's voice and listening" below; the change
+is explained there in the same plain words as the rest of this page)
 
 **A note on the name:** this app was called Nuri in versions before 0.3.3. It was renamed Ilona on October 18, 2026. It is the same app, from the same maker — only the name changed.
 
@@ -36,6 +38,11 @@ app.)
   "A choice you control" below), a photo you ask Ilona to identify
   is sent to Google for a better answer. It is **off until a key
   is added**, and removing the key stops it completely.
+- If you turn on listening, Ilona listens for her name
+  ("Hey Ilona") using the microphone. Hearing her name and turning
+  your words into text happen **on your phone**. Your voice is
+  **never recorded, saved, or sent anywhere** — see "Ilona's voice
+  and listening" below.
 
 ---
 
@@ -67,8 +74,11 @@ If you do not enter something, Ilona does not have it.
 - No user accounts and no sign-in.
 - No advertising and no advertising trackers.
 - No selling or renting of information.
-- No microphone recording. This version of Ilona does not record
-  audio at all.
+- No saving or sending of your voice. If you turn listening on,
+  the microphone is used to hear "Hey Ilona" and your words, on
+  the phone itself. Ilona does **not** keep recordings of your
+  voice and does **not** send your voice anywhere. If listening is
+  off, the microphone is not used at all.
 - No face recognition. Ilona never identifies a person from a photo of
   their face.
 
@@ -87,6 +97,35 @@ Policy: https://policies.google.com/privacy
 
 The ML Kit Terms of Service require app makers to tell you about
 this. That is why this section is here.
+
+## Ilona's voice and listening
+
+From version 0.4.0, Ilona can talk and listen:
+
+- **Her voice works on your phone.** Ilona speaks using voice
+  software that runs on the phone itself. Nothing about her
+  speaking leaves the phone.
+- **Listening is your choice, and it is on the phone too.** If you
+  turn on listening in Settings, Ilona listens for "Hey Ilona"
+  and turns what you say into words — all on the phone. While
+  listening is on, the microphone hears the room the way a person
+  standing there would, but Ilona does **not** save the sound and
+  does **not** send it anywhere. Sounds pass through her hearing
+  and are gone; only the words she understands are kept, in the
+  same help diary described above — exactly as if you had typed
+  them. You can turn listening off at any time in Settings, and
+  the microphone stops.
+- **Her voice arrives as a download.** Her speaking voice and her
+  understanding are large files that download once, after install,
+  from the public software libraries that host them (GitHub and
+  Hugging Face). Like any download, those services can see that a
+  download happened and the internet address it went to — the same
+  as downloading any app or file. The download contains no
+  information about you, and nothing is uploaded.
+- **If a closer-look key has been added** (see the next section),
+  the words of a question you ask out loud may be sent to Google
+  together with a photo, the same as a question you type. Without
+  a key, your words never leave the phone.
 
 ## A choice you control: the "closer look" (Show Ilona)
 
@@ -184,3 +223,20 @@ If this policy changes, the new version will be posted at the same
 web address, the date at the top will change, and the app will show a
 short note about the change. Changes will never quietly take away
 the promises in "The short version."
+
+---
+
+## How this policy is hosted (free — GitHub Pages)
+
+- **Repo:** the existing public repo, `smartyourtv/nuri`
+- **File to add:** `docs/privacy-policy.md` in that repo, containing
+  this exact text (GitHub Pages renders it automatically), with
+  `docs/index.md` linking to it.
+- **URL it will have:** `https://smartyourtv.github.io/nuri/privacy-policy`
+  (standard GitHub Pages address for that repo and file; enable under
+  repo Settings → Pages → "Deploy from a branch" → `main` / `/docs`).
+- **Cost:** $0. GitHub Pages is free for public repos.
+- **Also link it:** README (public repo), the app Settings screen
+  (see the notices wiring checklist), and the download page.
+- **Do not publish until:** v0.3.1 build wires the in-app link and
+  the maintainer confirms the URL resolves.

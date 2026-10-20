@@ -44,6 +44,11 @@ fun DiagnosticsScreen(
                 }
             }
         }
+        // Voice health (v0.4.0): the live card — listener heartbeat,
+        // microphone, wake counters, engine state, output route, and
+        // the one-tap by-ear voice self-test. Reads the services
+        // themselves (VoiceRuntime), never a saved flag.
+        VoiceHealthCard()
         // Appearance self-check (brief SS3): current size step + theme + its
         // measured contrast ratio, read live from the settings repository.
         val diagContext = androidx.compose.ui.platform.LocalContext.current

@@ -51,8 +51,13 @@ object EmotionProsody {
     }
 }
 
-/** Honest scaffold engine: reports no voice until the real engine lands. */
+/**
+ * Retired scaffold engine (v0.4.0): the real engine is
+ * tts.android.KokoroVoiceEngine behind the IlonaSpeaker seam, with
+ * the platform voice as the honestly-labeled fallback. This class
+ * remains only so older references resolve; it is not used.
+ */
 class NotBuiltTtsEngine : TtsEngine {
     override fun currentVoice(): String? = null
-    fun statusText(): String = "Speaking voice: not built yet. When it arrives, Ilona will always use the same one voice."
+    fun statusText(): String = "Speaking voice: Ilona's own voice (Kokoro) when downloaded — see the voice health card for the live state."
 }

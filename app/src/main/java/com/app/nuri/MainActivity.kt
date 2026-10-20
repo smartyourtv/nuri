@@ -178,6 +178,43 @@ private fun NuriShell(repo: SettingsRepository) {
     val toggles by repo.personToggles.collectAsState(initial = PersonToggles())
     val effective = remember(effectiveTier, toggles) { EffectiveSettingsResolver.resolve(effectiveTier, toggles) }
 
+    // Voice routing (v0.4.0, LL4): a spoken utterance enters through
+    // EXACTLY this function — the same one typed text takes. There is
+    // one matcher, one help ladder, one history; the voice is just
+    // another keyboard.
+    var unstuckSeq by remember { mutableStateOf(0) }
+    fun routeText(text: String) {
+        if (com.app.nuri.speech.SafetyIntentParser.parse(text) ==
+            com.app.nuri.speech.SafetyIntent.HELP_REQUEST
+        ) {
+            pendingTypedText = null
+        } else {
+            pendingTypedText = text
+        }
+        unstuckSeq++
+        homeSub = HomeSub.UNSTUCK
+    }
+    LaunchedEffect(Unit) {
+        com.app.nuri.speech.android.VoiceBus.utterances.collect { text ->
+            routeText(text)
+            selected = NuriTab.Home
+        }
+    }
+    // Keep the listener in step with its setting at app start (the
+    // Settings switch starts/stops it directly; StartupRepair verifies
+    // and restarts it if it died — belt and braces, per the
+    // self-repair law).
+    val alwaysListenStored = toggles.alwaysListenEnabled ?: false
+    LaunchedEffect(alwaysListenStored) {
+        if (alwaysListenStored &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.RECORD_AUDIO
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            com.app.nuri.speech.android.AlwaysListenService.start(context)
+        }
+    }
+
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -199,31 +236,22 @@ private fun NuriShell(repo: SettingsRepository) {
                     onOpenUnstuck = { checkin -> homeSub = if (checkin) HomeSub.UNSTUCK_CHECKIN else HomeSub.UNSTUCK },
                     onOpenShowNuri = { homeSub = HomeSub.SHOWNURI },
                     onOpenGame = { homeSub = HomeSub.GAME },
-                    onAskTyped = { text ->
-                        // The universal help phrase re-opens the two-path
-                        // offer; anything else goes straight to the matcher.
-                        if (com.app.nuri.speech.SafetyIntentParser.parse(text) ==
-                            com.app.nuri.speech.SafetyIntent.HELP_REQUEST
-                        ) {
-                            pendingTypedText = null
-                        } else {
-                            pendingTypedText = text
-                        }
-                        homeSub = HomeSub.UNSTUCK
-                    },
+                    onAskTyped = { text -> routeText(text) },
                     gamesAllowedEffective = effective.gamesAllowed,
                     modifier = Modifier.padding(padding),
                 )
-                HomeSub.UNSTUCK, HomeSub.UNSTUCK_CHECKIN -> UnstuckScreen(
-                    repository = repo,
-                    tier = effectiveTier,
-                    onOpenShowNuri = { homeSub = HomeSub.SHOWNURI },
-                    onBack = { homeSub = HomeSub.HOME },
-                    startInCheckIn = homeSub == HomeSub.UNSTUCK_CHECKIN,
-                    initialText = pendingTypedText,
-                    onInitialTextConsumed = { pendingTypedText = null },
-                    modifier = Modifier.padding(padding),
-                )
+                HomeSub.UNSTUCK, HomeSub.UNSTUCK_CHECKIN -> androidx.compose.runtime.key(unstuckSeq) {
+                    UnstuckScreen(
+                        repository = repo,
+                        tier = effectiveTier,
+                        onOpenShowNuri = { homeSub = HomeSub.SHOWNURI },
+                        onBack = { homeSub = HomeSub.HOME },
+                        startInCheckIn = homeSub == HomeSub.UNSTUCK_CHECKIN,
+                        initialText = pendingTypedText,
+                        onInitialTextConsumed = { pendingTypedText = null },
+                        modifier = Modifier.padding(padding),
+                    )
+                }
                 HomeSub.SHOWNURI -> ShowNuriScreen(
                     repository = repo,
                     onBack = { homeSub = HomeSub.HOME },

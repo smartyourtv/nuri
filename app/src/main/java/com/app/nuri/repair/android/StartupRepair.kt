@@ -43,6 +43,7 @@ object StartupRepair {
             try {
                 repairSettings(app)
                 reconcileUpdateState(app)
+                repairVoiceListener(app)
             } catch (t: Throwable) {
                 CrashReports.recordError("Startup repair", t)
             }
@@ -166,6 +167,68 @@ object StartupRepair {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Voice listener repair (v0.4.0): if listening is switched on and
+     * the microphone is allowed, but the listener's heartbeat is stale
+     * (service dead — Android kills background services), restart it
+     * and VERIFY via a fresh heartbeat before claiming the repair.
+     * Starting a microphone foreground service can be refused while
+     * the app is fully in the background on newer Android versions;
+     * that refusal is logged once per version, and the listener then
+     * starts when Ilona is next opened (the shell does the same
+     * check). Never crashes startup.
+     */
+    private fun repairVoiceListener(app: Context) {
+        val repo = SettingsRepository(app)
+        val enabled = runCatching {
+            runBlocking { withTimeout(5_000) { repo.personToggles.first() } }.alwaysListenEnabled ?: false
+        }.getOrDefault(false)
+        if (!enabled) return
+        val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+            app, android.Manifest.permission.RECORD_AUDIO
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!granted) return
+        val age = com.app.nuri.speech.VoiceRuntime.heartbeatAgeMs()
+        if (com.app.nuri.speech.VoiceRuntime.snapshot().serviceRunning && age < 30_000) return
+        val started = runCatching {
+            com.app.nuri.speech.android.AlwaysListenService.start(app)
+            true
+        }.getOrDefault(false)
+        // Verify: a live listener heartbeats every ~80 ms frame.
+        var verified = false
+        if (started) {
+            val deadline = System.currentTimeMillis() + 3_000
+            while (System.currentTimeMillis() < deadline) {
+                if (com.app.nuri.speech.VoiceRuntime.heartbeatAgeMs() < 2_000) { verified = true; break }
+                try { Thread.sleep(150) } catch (_: InterruptedException) { break }
+            }
+        }
+        if (verified) {
+            CrashReports.recordRepair(
+                what = "Listening service restart",
+                evidence = "Listening for “Hey Ilona” is switched on, but the listener was not " +
+                    "running when Ilona started. It was started again during this start. " +
+                    "Check after the repair: the listener's heartbeat is fresh — passed.",
+                status = RepairStatus.REPAIRED
+            )
+        } else {
+            val store = UpdateRuntimeStore(app)
+            val signature = "listener-dead-vc${AndroidApkInspector(app).installedVersionCode()}"
+            if (store.repairFailureSignature() != signature) {
+                store.setRepairFailureSignature(signature)
+                CrashReports.recordRepair(
+                    what = "Listening service restart",
+                    evidence = "Listening for “Hey Ilona” is switched on, but the listener was not " +
+                        "running when Ilona started, and restarting it during this start did not " +
+                        "produce a heartbeat within 3 seconds. It will start when Ilona is next " +
+                        "opened to the home screen. This failure is reported once for this app " +
+                        "version, not on every start.",
+                    status = RepairStatus.REPAIR_FAILED
+                )
             }
         }
     }

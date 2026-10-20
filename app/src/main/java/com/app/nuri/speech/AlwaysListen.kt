@@ -2,14 +2,20 @@ package com.app.nuri.speech
 
 import com.app.nuri.config.NuriSettings
 
-/** State for VAD-gated Always listen ("Hey Nuri"). Service wiring is limited
- *  by the scaffold VoicePipeline contract: no foreground service / mic loop
- *  exists yet, so [running] is honest state, never faked. */
+/**
+ * State for VAD-gated Always listen ("Hey Ilona").
+ *
+ * v0.4.0 note: the live listener is speech.android.AlwaysListenService
+ * and its live state lives in speech.VoiceRuntime (that is what the
+ * voice health card reads). This scaffold state/controller pair is
+ * retained for the VAD-gate unit tests; nothing user-visible reads
+ * it anymore.
+ */
 data class AlwaysListenState(
     val enabledBySettings: Boolean = true,
     val running: Boolean = false,
     val gateOpen: Boolean = false,
-    val lastHeardText: String = "Not built yet — the listening service arrives with on-device testing.",
+    val lastHeardText: String = "Live listening state is on the voice health card (Health check tab).",
     val wakePhrase: String = NuriSettings.WAKE_PHRASE
 )
 
@@ -29,5 +35,5 @@ class AlwaysListenController(private val vad: EnergyVad = EnergyVad()) {
     fun diagnosticsText(): String =
         if (!enabled) "Always listen is OFF. Ilona only listens when you tap and talk."
         else "Always listen is set ON, waiting for '${NuriSettings.WAKE_PHRASE}'. " + vad.diagnosticsText() +
-             " Listening service itself: not built yet (needs on-device testing)."
+             " Live listener state is on the voice health card."
 }

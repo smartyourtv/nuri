@@ -29,6 +29,18 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- Voice (v0.4.0). RECORD_AUDIO — the always-listen wake word
+         ("Hey Ilona") and on-device speech-to-text. Audio is processed
+         ON this phone (sherpa-onnx wake spotting + recognition run
+         locally); nothing is recorded to storage or sent anywhere.
+         FOREGROUND_SERVICE + FOREGROUND_SERVICE_MICROPHONE — the
+         microphone-type listener service, which runs ONLY when the
+         person (or caregiver) turned listening on in Settings. Each
+         permission is requested at runtime at the moment of use. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
     <application
         android:name=".NuriApplication"
         android:allowBackup="false"
@@ -60,6 +72,15 @@
         <receiver
             android:name=".unstuck.android.MedReminderReceiver"
             android:exported="false" />
+
+        <!-- Always-listen (v0.4.0): microphone-type foreground service.
+             Not exported — only Ilona herself can start it, and only
+             after the person turned listening on. Its live state feeds
+             the voice health card (Health check tab). -->
+        <service
+            android:name=".speech.android.AlwaysListenService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
 
         <!-- Show Nuri camera capture: photos land in app-private storage. -->
         <provider

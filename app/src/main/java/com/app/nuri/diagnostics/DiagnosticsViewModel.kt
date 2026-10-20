@@ -8,9 +8,7 @@ import com.app.nuri.backup.CaregiverMediatedRecovery
 import com.app.nuri.bluetooth.BtDiagnostics
 import com.app.nuri.bluetooth.BtSlotManager
 import com.app.nuri.google.GoogleDiagnostics
-import com.app.nuri.speech.AlwaysListenController
 import com.app.nuri.speech.OfflineSafetyHandlers
-import com.app.nuri.tts.NotBuiltTtsEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,13 +23,12 @@ data class DiagnosticsState(val checks: List<DiagnosticCheck> = emptyList(), val
  * connected; the backup check runs a REAL encrypt/decrypt round-trip.
  */
 class DiagnosticsViewModel : ViewModel() {
-    private val alwaysListen = AlwaysListenController()
     private fun buildChecks(runBackupTest: Boolean): List<DiagnosticCheck> {
         val backupTest = if (runBackupTest) BackupCrypto.selfTest() else null
         return listOf(
-            DiagnosticCheck("App", "OK", "Ilona is running (v0.3.0 — Unstuck helpers, Show Ilona, safety actions)."),
-            DiagnosticCheck("Voice", "Not built yet", NotBuiltTtsEngine().statusText()),
-            DiagnosticCheck("Always listen", "Not built yet", alwaysListen.diagnosticsText()),
+            DiagnosticCheck("App", "OK", "Ilona is running (version ${com.app.nuri.BuildConfig.VERSION_NAME} — voice, Unstuck helpers, Show Ilona, safety actions)."),
+            DiagnosticCheck("Voice", "Live card below", "Ilona's voice and listening have their own card right below this list — it reads the actual listener and speaker as they run, and its test button plays her voice for you to judge by ear."),
+            DiagnosticCheck("Always listen", "Live card below", "Listening state, microphone health, and wake-word counts are on the voice card below, read from the listener itself."),
             DiagnosticCheck("Safety check-ins", "Built — offline design", OfflineSafetyHandlers.diagnosticsText()),
             DiagnosticCheck("Encrypted backup (on this phone)", if (backupTest == null) "Not tested yet" else if (backupTest.ok) "OK" else "Needs attention",
                 backupTest?.detail ?: "Tap the check button to test saving and restoring an encrypted copy."),
