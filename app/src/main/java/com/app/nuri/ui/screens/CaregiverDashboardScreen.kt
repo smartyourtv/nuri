@@ -65,5 +65,13 @@ fun CaregiverDashboardScreen(
         // Flavor-provided caregiver section (family layer in the private
         // edition; renders nothing in the public edition).
         FlavorHooks.CaregiverFamilySection(settingsRepository)
+        // v0.5.0 remote observation (design §13.2): the watching door /
+        // "His phone" view / troubleshooting panel. Renders nothing in
+        // 'Just me' mode or before a connection exists beyond the door.
+        RemoteCaregiverSection(settingsRepository)
+        // Flavor sections: remote shadow editor + test mode (private
+        // edition only; both render nothing in the public edition).
+        FlavorHooks.CaregiverRemoteShadowSection(settingsRepository)
+        FlavorHooks.CaregiverTestModeSection(settingsRepository)
     }
 }

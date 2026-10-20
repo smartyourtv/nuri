@@ -26,6 +26,12 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <!-- v0.5.0 calls (design §17): ending a follow-through call from
+         the big End button, the incoming-call surface, and the
+         caregiver watch service's foreground type. -->
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -81,6 +87,21 @@
             android:name=".speech.android.AlwaysListenService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <!-- v0.5.0 remote observation (design §10.1/§13): caregiver
+             watch service + FCM endpoint. Both stay inert until a
+             watching connection exists. -->
+        <service
+            android:name=".remote.android.CaregiverWatchService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+        <service
+            android:name=".remote.android.IlonaMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- Show Nuri camera capture: photos land in app-private storage. -->
         <provider

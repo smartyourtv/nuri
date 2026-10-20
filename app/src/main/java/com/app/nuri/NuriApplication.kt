@@ -45,6 +45,15 @@ class NuriApplication : Application() {
         // every repair is verified and logged to the report store.
         StartupRepair.runAsync(this)
         CrashReports.breadcrumbs.mark("startup repair running")
+        // v0.5.0 remote observation (design §13.1): register the
+        // flavor's shadow handler, then start whichever side of
+        // watching this phone is bound to. Everything is inert when
+        // no connection exists; guarded like the update scheduler —
+        // watching must never be able to crash app launch.
+        runCatching { com.app.nuri.config.FlavorHooks.registerRemoteHandlers(this) }
+            .onFailure { e -> CrashReports.recordError("Remote handler registration", e) }
+        com.app.nuri.remote.android.RemoteStartup.startAsync(this)
+        CrashReports.breadcrumbs.mark("remote observation starting")
         // TODO(GATED): initialize shared Scout voice engine (tts/ + speech/).
         // TODO(GATED): start diagnostics collection.
         CrashReports.breadcrumbs.mark("app setup finished")

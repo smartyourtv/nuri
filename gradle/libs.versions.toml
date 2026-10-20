@@ -19,6 +19,12 @@ mlkitTextRecognition = "16.0.1"
 mlkitImageLabeling = "17.0.9"
 mlkitBarcode = "17.3.0"
 commonsCompress = "1.26.0"
+# Remote observation (v0.5.0): Firebase BoM pins firestore/auth/messaging
+# transitively. Versions recorded here; never drift (pinned-build law).
+firebaseBom = "33.7.0"
+zxingCore = "3.5.3"
+codeScanner = "16.1.0"
+webrtcSdk = "144.7559.15"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -39,6 +45,13 @@ mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition"
 mlkit-image-labeling = { group = "com.google.mlkit", name = "image-labeling", version.ref = "mlkitImageLabeling" }
 mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode" }
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
+webrtc-sdk = { group = "io.github.webrtc-sdk", name = "android", version.ref = "webrtcSdk" }
+play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "codeScanner" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

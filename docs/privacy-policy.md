@@ -164,11 +164,60 @@ with a caregiver ("Shared"), or managed by a caregiver ("Managed").
 - In every mode, the caregiver sees Ilona's information **on this
   phone** — the check-ins, the medicine confirmations, the help
   diary, and the safety notes.
-- The public version of Ilona has **no remote monitoring**. Nobody can
-  watch your phone from somewhere else. There is no connection to
-  send it anywhere.
+- Ilona does not watch your phone for anyone unless a caregiver you
+  know sets up watching, in the way described in the next section.
 - If you use a mode with a caregiver, choose someone you trust, the
   same way you would trust someone who helps you in your home.
+
+## Watching from another phone (only if a caregiver sets it up)
+
+If Ilona is set up as "Shared" or "Managed," the person helping you
+can choose to see Ilona's dashboard from their own phone — the
+morning check-in, the medicine confirmations and misses, the safety
+notes, and the help diary. This only works if that caregiver sets
+it up, in person, with your phone and theirs together.
+
+- What travels: only that dashboard information. It is scrambled
+  (encrypted) on your phone before it leaves, and it can only be
+  unscrambled by your caregiver's phone. It passes through a free
+  Google Firebase project that belongs to the caregiver — Google
+  stores the scrambled information and cannot read it.
+- What never travels: your conversations with Ilona, your messages,
+  your photos, your calls, and where you are — except that a safety
+  alert (for example, if you say you are lost) may include the place
+  where the alert happened, inside the scrambled alert, for your
+  caregiver only.
+- In "Just me" mode, none of this exists. Nothing leaves your phone.
+- Your caregiver can stop the watching from their phone, and the
+  setup can be removed from yours. Removing it stops any new
+  information from traveling; the scrambled copies already stored
+  in the caregiver's project are deleted by the caregiver's app on
+  removal, and in any case cannot be read by anyone else.
+
+## Calls through Ilona (only with the watching setup)
+
+If watching is set up, your caregiver can ask Ilona to open a call
+with you, and Ilona can open a call itself after a safety alert
+(for example, if you pressed for help and did not answer after).
+
+- Ilona **always announces a call out loud first** — who is
+  calling, and that they will be able to see and hear you. A call
+  is never a surprise. For a call your caregiver asks for, nothing
+  opens unless you answer it yourself. After a safety alert, Ilona
+  announces the call more than once and waits a short while before
+  opening it, so you can always say no.
+- You can say no, turn the camera off during a call, or end the
+  call at any time. Ending it is immediate, and the dashboard
+  record says honestly that you ended it.
+- Calls are **live only**. Nothing about a call is recorded: no
+  sound, no picture, no written copy of what was said. The only
+  thing stored is a short note that a call happened — when, what
+  kind, how long, and how it ended — scrambled like the rest of
+  the dashboard information.
+- If a call after a safety alert cannot get through as a video
+  call, Ilona says so out loud and may place an ordinary phone
+  call to your caregiver's number instead, with the speaker on.
+  That is a normal phone call and shows in the phone's call list.
 
 ## Keeping, deleting, and backups
 

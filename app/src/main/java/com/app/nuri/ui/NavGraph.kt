@@ -63,6 +63,13 @@ object NavGraph {
         Destination("Crash & error reports", listOf("Tab: Settings", "Settings: See crash & error reports")),
         Destination("Family & help setup (caregiver name, safe word, spouse response, emergency contact, medicines, snapshots)", listOf("Tab: Settings", "Settings: scroll to Family & help setup")),
         Destination("First-install setup", listOf("First launch before setup is completed")),
+        // v0.5.0 remote observation (design §13.2 + order Amendment 1):
+        // the watching surfaces live on the caregiver dashboard
+        // (Family summary) and in Family & help setup.
+        Destination("His phone — watching (status, alerts, call him)", listOf("Tab: Settings", "Settings: Family summary", "Family summary: scroll to His phone")),
+        Destination("Set up watching (connect his phone)", listOf("Tab: Settings", "Settings: Family summary", "Family summary: Set up watching")),
+        Destination("Watching troubleshooting (link, watch service, replace a phone, test alert)", listOf("Tab: Settings", "Settings: Family summary", "Family summary: scroll to Troubleshooting")),
+        Destination("Connect this phone (senior side of watching)", listOf("Tab: Settings", "Settings: scroll to Family & help setup", "Family & help setup: Connect this phone")),
     )
 
     fun unreachable(maxTaps: Int = MAX_TAPS): List<Destination> =

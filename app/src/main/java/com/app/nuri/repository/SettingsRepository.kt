@@ -87,6 +87,20 @@ class SettingsRepository(private val context: Context) {
         val CLOUD_VISION_KEY = stringPreferencesKey("cloud_vision_key")
         val CLOUD_HINT_PENDING = booleanPreferencesKey("cloud_hint_pending")
         val SAFETY_CARD_SEEN = booleanPreferencesKey("safety_card_seen")
+        // ── v0.5.0: remote observation (design §13) — additive only ──
+        val REMOTE_ROLE = stringPreferencesKey("remote_role")
+        val REMOTE_HOUSEHOLD_ID = stringPreferencesKey("remote_household_id")
+        val REMOTE_TEST_HOUSEHOLD_ID = stringPreferencesKey("remote_test_household_id")
+        val REMOTE_TEST_ON = booleanPreferencesKey("remote_test_on")
+        val REMOTE_CONFIG_JSON = stringPreferencesKey("remote_config_json")
+        val REMOTE_FCM_TOKEN = stringPreferencesKey("remote_fcm_token")
+        val REMOTE_CHECKIN_HOUR = intPreferencesKey("remote_checkin_hour")
+        val REMOTE_NO_ANSWER_THRESHOLD = intPreferencesKey("remote_no_answer_threshold")
+        val REMOTE_LAST_WELFARE_RAISED_AT = androidx.datastore.preferences.core.longPreferencesKey("remote_last_welfare_raised_at")
+        val REMOTE_WATCH_ENABLED = booleanPreferencesKey("remote_watch_enabled")
+        val REMOTE_LAST_SYNC_AT = androidx.datastore.preferences.core.longPreferencesKey("remote_last_sync_at")
+        val CAREGIVER_CALL_NUMBER = stringPreferencesKey("caregiver_call_number")
+        val PERSON_VOICE_ONLY_CALLS = booleanPreferencesKey("person_voice_only_calls")
     }
 
     private fun <T : Enum<T>> enumFlow(key: androidx.datastore.preferences.core.Preferences.Key<String>, default: T, values: Array<T>): Flow<T> =
@@ -275,4 +289,59 @@ class SettingsRepository(private val context: Context) {
     /** First-install safety card (legal checklist §5): shown once, acknowledgment stored; never blocks anything. */
     val safetyCardSeen: Flow<Boolean> = context.dataStore.data.map { it[Keys.SAFETY_CARD_SEEN] ?: false }
     suspend fun setSafetyCardSeen(v: Boolean) { context.dataStore.edit { it[Keys.SAFETY_CARD_SEEN] = v } }
+
+    // ── v0.5.0: remote observation state (design §13.2) ─────────────
+    /** This phone's role in its real household: NONE / SENIOR / CAREGIVER (remote/RemoteRole names). */
+    val remoteRole: Flow<String> = context.dataStore.data.map { it[Keys.REMOTE_ROLE] ?: "NONE" }
+    val remoteHouseholdId: Flow<String> = context.dataStore.data.map { it[Keys.REMOTE_HOUSEHOLD_ID] ?: "" }
+    suspend fun setRemoteBinding(role: String, householdId: String) {
+        context.dataStore.edit { it[Keys.REMOTE_ROLE] = role; it[Keys.REMOTE_HOUSEHOLD_ID] = householdId }
+    }
+    suspend fun clearRemoteBinding() {
+        context.dataStore.edit { it.remove(Keys.REMOTE_ROLE); it.remove(Keys.REMOTE_HOUSEHOLD_ID) }
+    }
+
+    /** Single-phone test mode (design §11): a separate binding; never touches the real one. */
+    val remoteTestOn: Flow<Boolean> = context.dataStore.data.map { it[Keys.REMOTE_TEST_ON] ?: false }
+    val remoteTestHouseholdId: Flow<String> = context.dataStore.data.map { it[Keys.REMOTE_TEST_HOUSEHOLD_ID] ?: "" }
+    suspend fun setRemoteTest(householdId: String) {
+        context.dataStore.edit { it[Keys.REMOTE_TEST_HOUSEHOLD_ID] = householdId; it[Keys.REMOTE_TEST_ON] = true }
+    }
+    suspend fun clearRemoteTest() {
+        context.dataStore.edit { it.remove(Keys.REMOTE_TEST_HOUSEHOLD_ID); it[Keys.REMOTE_TEST_ON] = false }
+    }
+
+    /** Public flavor's pasted project config (design §10.2), stored app-private as JSON. */
+    val remoteConfigJson: Flow<String> = context.dataStore.data.map { it[Keys.REMOTE_CONFIG_JSON] ?: "" }
+    suspend fun setRemoteConfigJson(v: String) { context.dataStore.edit { it[Keys.REMOTE_CONFIG_JSON] = v } }
+
+    val remoteFcmToken: Flow<String> = context.dataStore.data.map { it[Keys.REMOTE_FCM_TOKEN] ?: "" }
+    suspend fun setRemoteFcmToken(v: String) { context.dataStore.edit { it[Keys.REMOTE_FCM_TOKEN] = v } }
+
+    /** Caregiver-set hour for the missing-check-in computation (§8.3); default 10 AM. */
+    val remoteCheckinHour: Flow<Int> = context.dataStore.data.map { it[Keys.REMOTE_CHECKIN_HOUR] ?: 10 }
+    suspend fun setRemoteCheckinHour(v: Int) { context.dataStore.edit { it[Keys.REMOTE_CHECKIN_HOUR] = v } }
+
+    /** No-answer ladder threshold (design §17.4); default 2 within an hour. */
+    val remoteNoAnswerThreshold: Flow<Int> = context.dataStore.data.map { it[Keys.REMOTE_NO_ANSWER_THRESHOLD] ?: 2 }
+    suspend fun setRemoteNoAnswerThreshold(v: Int) { context.dataStore.edit { it[Keys.REMOTE_NO_ANSWER_THRESHOLD] = v.coerceIn(1, 5) } }
+
+    val remoteLastWelfareRaisedAt: Flow<Long> = context.dataStore.data.map { it[Keys.REMOTE_LAST_WELFARE_RAISED_AT] ?: 0L }
+    suspend fun setRemoteLastWelfareRaisedAt(v: Long) { context.dataStore.edit { it[Keys.REMOTE_LAST_WELFARE_RAISED_AT] = v } }
+
+    /** Caregiver watch-service opt-in (default on once a caregiver binding exists). */
+    val remoteWatchEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.REMOTE_WATCH_ENABLED] ?: true }
+    suspend fun setRemoteWatchEnabled(v: Boolean) { context.dataStore.edit { it[Keys.REMOTE_WATCH_ENABLED] = v } }
+
+    /** Last time the caregiver side successfully received anything (B1 link status). */
+    val remoteLastSyncAt: Flow<Long> = context.dataStore.data.map { it[Keys.REMOTE_LAST_SYNC_AT] ?: 0L }
+    suspend fun setRemoteLastSyncAt(v: Long) { context.dataStore.edit { it[Keys.REMOTE_LAST_SYNC_AT] = v } }
+
+    /** The caregiver's own phone number, for Ilona's calls (design §17: number resolution). */
+    val caregiverCallNumber: Flow<String> = context.dataStore.data.map { it[Keys.CAREGIVER_CALL_NUMBER] ?: "" }
+    suspend fun setCaregiverCallNumber(v: String) { context.dataStore.edit { it[Keys.CAREGIVER_CALL_NUMBER] = v.trim() } }
+
+    /** Per-person call media toggle (design §17.5): this person prefers voice-only calls. */
+    val personVoiceOnlyCalls: Flow<Boolean> = context.dataStore.data.map { it[Keys.PERSON_VOICE_ONLY_CALLS] ?: false }
+    suspend fun setPersonVoiceOnlyCalls(v: Boolean) { context.dataStore.edit { it[Keys.PERSON_VOICE_ONLY_CALLS] = v } }
 }

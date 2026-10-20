@@ -33,7 +33,10 @@ import com.app.nuri.config.NuriSettings
 object TherapistSharingText {
     const val WHAT_IS_SHARED: String =
         "Ilona shares only what was set up with the therapist: check-in summaries and safety alerts, " +
-        "with the people named during setup. Ilona does not share conversations word for word, and does not share anything with advertisers."
+        "with the people named during setup. If watching is turned on together during setup, those check-ins and alerts " +
+        "are also shown on the named caregiver's own phone, and the caregiver can ask Ilona to open a call — Ilona always " +
+        "announces a call out loud first, says who is calling and that they will be able to see and hear, and the person can " +
+        "always say no or end it. Ilona does not share conversations word for word, and does not share anything with advertisers."
     const val ASK_ANYTIME: String =
         "You can ask Ilona any time: 'What do you share?' Ilona will always answer with the list above."
     const val LEGAL_REP_NOTE: String =
@@ -126,6 +129,13 @@ fun FirstInstallScreen(
                     pendingConfirm = NuriSettings.FirstInstallMode.CAREGIVER to NuriSettings.AccessMode.MANAGED
                 }, modifier = Modifier.fillMaxWidth()) { Text("I look after the settings — they just talk to Ilona") }
                 Text("Best when the person needs the simplest experience. You apply updates and changes for them.")
+                // Amendment 1(4): watching is offered in the same
+                // sitting, while both phones are together. Skippable —
+                // it stays available later in Settings.
+                Text("One more thing, while you're together", style = MaterialTheme.typography.titleMedium)
+                Text("Is someone helping you with this phone? If the caregiver has their phone with them, you can connect watching now — one tap. You can also skip this and do it later in Settings.")
+                val firstInstallContext = androidx.compose.ui.platform.LocalContext.current
+                SeniorConnectBlock(remember(firstInstallContext) { com.app.nuri.repository.SettingsRepository(firstInstallContext.applicationContext) })
             }
             NuriSettings.FirstInstallMode.THERAPIST -> {
                 Card { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

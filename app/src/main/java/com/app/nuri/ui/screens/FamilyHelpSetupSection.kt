@@ -236,6 +236,30 @@ fun FamilyHelpSetupSection() {
 
     if (note.isNotEmpty()) Text(note, style = MaterialTheme.typography.titleMedium)
     Text("Vision: Show Ilona reads and identifies on this phone (ML Kit). With a caregiver's key added above, photos can also get a closer look online (Google Gemini). If a photo can't be read either way, Ilona says so and offers to ask ${FlavorHooks.askNameOverride() ?: "the caregiver"} with the photo.")
+
+    // v0.5.0 watching (design §13.2): the senior side connects here —
+    // one button — and the public edition's one-time project paste
+    // lives here too. Both blocks are inert in 'Just me' mode.
+    if (accessMode != NuriSettings.AccessMode.INDEPENDENT) {
+        SeniorConnectBlock(repo)
+        WatchProjectSetupBlock(repo)
+        // Caregiver's own number, for Ilona's calls (design §17):
+        // the number Ilona calls is the caregiver's, never a service.
+        var cgCallNumber by remember { mutableStateOf("") }
+        val savedCallNumber by repo.caregiverCallNumber.collectAsState(initial = "")
+        androidx.compose.runtime.LaunchedEffect(savedCallNumber) { if (cgCallNumber.isEmpty()) cgCallNumber = savedCallNumber }
+        Text("The caregiver's phone number (for Ilona's calls)", style = MaterialTheme.typography.titleLarge)
+        Text("If Ilona ever needs to open a call — when the person taps “Call him” the other way, or after a safety alert — this is the number it uses. It is the caregiver's own number, from this phone's setup.")
+        OutlinedTextField(value = cgCallNumber, onValueChange = { cgCallNumber = it }, label = { Text("Caregiver's phone number") }, modifier = Modifier.fillMaxWidth())
+        Button(onClick = { scope.launch { repo.setCaregiverCallNumber(cgCallNumber) }; note = "Number saved on this phone." }, modifier = Modifier.fillMaxWidth()) { Text("Save the number") }
+        // Per-person call media choice (design §17.5).
+        val voiceOnly by repo.personVoiceOnlyCalls.collectAsState(initial = false)
+        Text("Calls with the caregiver", style = MaterialTheme.typography.titleLarge)
+        Text(if (voiceOnly) "Calls start with voice only — the camera stays off unless you turn it on during a call." else "Calls start with video and voice, so the caregiver can see and hear you. You can turn the camera off during any call.")
+        OutlinedButton(onClick = { scope.launch { repo.setPersonVoiceOnlyCalls(!voiceOnly) } }, modifier = Modifier.fillMaxWidth()) {
+            Text(if (voiceOnly) "Use video and voice" else "Use voice only")
+        }
+    }
 }
 
 @Composable

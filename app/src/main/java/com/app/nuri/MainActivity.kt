@@ -268,4 +268,8 @@ private fun NuriShell(repo: SettingsRepository) {
             NuriTab.Settings -> SettingsScreen(Modifier.padding(padding))
         }
     }
+    // v0.5.0 calls (design §17): the senior-side call surface. It
+    // renders only while a call session is active; during a call it
+    // is the persistent, unmissable "call is live" state (§17.5).
+    com.app.nuri.ui.screens.CallOverlay()
 }

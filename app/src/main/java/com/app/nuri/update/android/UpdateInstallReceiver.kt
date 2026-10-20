@@ -22,8 +22,13 @@ class UpdateInstallReceiver : BroadcastReceiver() {
         if (intent.action != PackageInstallerGateway.ACTION_UPDATE_STATUS) return
         val app = context.applicationContext
         val store = UpdateRuntimeStore(app)
-        when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Int.MIN_VALUE)) {
-            PackageInstaller.STATUS_PENDING_USER_ACTION -> {
+        val status = when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Int.MIN_VALUE)) {
+            PackageInstaller.STATUS_PENDING_USER_ACTION -> com.app.nuri.update.InstallStatus.PENDING_USER_ACTION
+            PackageInstaller.STATUS_SUCCESS -> com.app.nuri.update.InstallStatus.SUCCESS
+            else -> com.app.nuri.update.InstallStatus.FAILED
+        }
+        when (com.app.nuri.update.InstallStatusMapping.actionFor(status)) {
+            com.app.nuri.update.InstallAction.SHOW_SYSTEM_PROMPT -> {
                 @Suppress("DEPRECATION")
                 val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
                 if (confirm != null) {
@@ -37,10 +42,10 @@ class UpdateInstallReceiver : BroadcastReceiver() {
                     }
                 }
             }
-            PackageInstaller.STATUS_SUCCESS -> {
+            com.app.nuri.update.InstallAction.MARK_INSTALLED -> {
                 store.recordRunResult("The update installed. Ilona will check itself when it starts again.")
             }
-            else -> {
+            com.app.nuri.update.InstallAction.CLEAR_AND_ALERT -> {
                 val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
                     ?.takeIf { it.isNotBlank() }
                 store.clear()

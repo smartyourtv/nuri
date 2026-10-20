@@ -14,8 +14,8 @@ android {
         // Deliberately targets old phones; interface freeze starts here.
         minSdk = 29
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.4.1"
+        versionCode = 9
+        versionName = "0.5.0"
 
         // Phones only: the floor device is a Galaxy S10-class ARM phone.
         // Without this, ML Kit's bundled models ship native libraries for
@@ -138,6 +138,23 @@ dependencies {
     implementation(files("libs/sherpa-onnx-1.13.2.aar"))
     // Tar/bzip2 for the model packs (same version Scout ships).
     implementation(libs.commons.compress)
+    // Remote observation (v0.5.0, design §13): Firestore relay +
+    // anonymous auth + FCM token registration. BoM-pinned. The SDK is
+    // inert until FirebaseInit runs (a configured project + a
+    // non-Independent mode); Independent installs never initialize it.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.messaging)
+    // QR rendering for the pairing offer (design §4.2). Encoding only;
+    // scanning is ML Kit barcode (already a dependency).
+    implementation(libs.zxing.core)
+    // Amendment 2+3 calls: WebRTC video+audio (design §17.1). The
+    // peer-connection factory is only initialized while a call runs.
+    implementation(libs.webrtc.sdk)
+    // System scan UI for the connect code (design §4.2) — no camera
+    // pipeline of our own; the OS scanner returns the text.
+    implementation(libs.play.services.code.scanner)
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)
 }

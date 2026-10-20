@@ -96,10 +96,29 @@ H.2  Google Play services client libraries (transitive, via ML Kit)
        Terms of Service (https://developers.google.com/terms/). No
        source-distribution duty. (Supersedes G.1/G.2 for this build.)
 
-H.3  Firebase components (transitive, via ML Kit common)
-     com.google.firebase:firebase-components, firebase-encoders,
-       firebase-encoders-json, firebase-annotations — Apache License 2.0
-       (LICENSE TEXTS, section L2). No Firebase backend service is used.
+H.3  Firebase components
+     Transitive, via ML Kit common: com.google.firebase:firebase-
+       components, firebase-encoders, firebase-encoders-json,
+       firebase-annotations — Apache License 2.0 (LICENSE TEXTS,
+       section L2).
+     DIRECT USE (v0.5.0, watching): com.google.firebase:firebase-
+       firestore, firebase-auth, firebase-messaging (versions via
+       the Firebase Bill of Materials) — Apache License 2.0
+       (section L2). When a caregiver sets up watching, the app
+       uses Google Cloud Firestore and Firebase Authentication
+       (anonymous sign-in) as the scrambled-information store
+       described in the Privacy Policy, and Firebase Cloud
+       Messaging to carry the connection test message. Use of those
+       services is subject to the Google APIs Terms of Service
+       (https://developers.google.com/terms/). No other Firebase
+       backend service is used.
+     Also direct (v0.5.0): com.google.zxing:core (QR codes for the
+       watching connect code) — Apache License 2.0 (section L2);
+       io.github.webrtc-sdk:android (the WebRTC library Ilona's
+       calls are built on) — BSD 3-Clause License (LICENSE TEXTS,
+       section L7); com.google.android.gms:play-services-code-
+       scanner (the system code-scanning screen) — proprietary,
+       Google APIs Terms of Service, no source-distribution duty.
 
 H.4  Google Data Transport (transitive, via ML Kit common)
      com.google.android.datatransport:transport-api, transport-runtime,
@@ -1890,6 +1909,38 @@ commitment (e.g. by text profiling, drawing causal relationships between
 assertions made in documents, indiscriminate and arbitrarily-targeted use).
 
 --- End of verbatim BigScience OpenRAIL-M text. ---
+
+
+L7. BSD 3-Clause License
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above
+     copyright notice, this list of conditions and the following
+     disclaimer in the documentation and/or other materials provided
+     with the distribution.
+
+  3. Neither the name of the copyright holder nor the names of its
+     contributors may be used to endorse or promote products derived
+     from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 
 ================================================================================
 END OF THIRD-PARTY NOTICES
